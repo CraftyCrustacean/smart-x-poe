@@ -11,7 +11,7 @@ mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
 
 # MQTT setup
 try:
-    client = mqtt.Client()
+    client = mqtt.Client()  
     client.connect(mqtt_host, mqtt_port)
     client.loop_start()
 except Exception as e:

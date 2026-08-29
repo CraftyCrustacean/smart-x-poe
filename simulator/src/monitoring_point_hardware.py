@@ -1,6 +1,7 @@
 import random
 import math
 
+#Possibly introduce flow rate sensor, but not required for assignment. Could be used to simulate a leak in the pipeline.
 
 class SensorDevice:
 
@@ -50,10 +51,10 @@ class EnvironmentalSensor(SensorDevice):
             return
 
         # Elevation changes
-        base_change = rng.gauss(0, 0.3)
-        # Sensors at risk point drop faster (following a logarithmic pattern)
-        drift = -0.15 * math.log1p(self.tick) if self.is_at_risk else 0
-        self.elevation_change_mm += base_change + drift
+        noise = max(-3.0, min(3.0, rng.gauss(0, 1.5)))
+        # Sensors at risk points trend to -15mm following a logirithmic curve
+        drift = max(-15.0, -2.0 * math.log1p(self.tick)) if self.is_at_risk else 0.0
+        self.elevation_change_mm = drift + noise
 
         # Surface temp changes
         noise = rng.gauss(0, 0.8)
@@ -61,7 +62,7 @@ class EnvironmentalSensor(SensorDevice):
         if self.is_at_risk and rng.random() < 0.08:
             # Add a number between 3 and 7 to at tisk sensors
             anomaly = rng.uniform(3,7)
-        self.surface_temperature_c = 21 + noise + anomaly
+        self.surface_temperature_c = 18 + noise + anomaly
 
         # Colour shift, at risk points trending toward a lower value
         target = -0.4 if self.is_at_risk else 0.0
