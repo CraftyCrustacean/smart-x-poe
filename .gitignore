@@ -1,6 +1,13 @@
 # Created by https://www.toptal.com/developers/gitignore/api/python,dotnetcore,visualstudio,visualstudiocode,pycharm,node
 # Edit at https://www.toptal.com/developers/gitignore?templates=python,dotnetcore,visualstudio,visualstudiocode,pycharm,node
 
+# Docker
+.dockerignore
+
+# OS
+.DS_Store
+Thumbs.db
+
 ### DotnetCore ###
 # .NET Core build folders
 bin/
