@@ -1,0 +1,21 @@
+services:
+  mosquitto:
+    image: eclipse-mosquitto
+    ports:
+      - "1883:1883"
+    healthcheck:
+      test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+
+  simulator:
+    build:
+      context: ./simulator
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      mosquitto:
+        condition: service_healthy
