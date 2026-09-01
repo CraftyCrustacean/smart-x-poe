@@ -1,12 +1,11 @@
 import random
 import math
 
-#Possibly introduce flow rate sensor, but not required for assignment. Could be used to simulate a leak in the pipeline.
 
 class SensorDevice:
 
     disconnect_chance = 0.0015
-    battery_drain = 0.0025
+    battery_drain_pct_per_pass = 0.05
 
 
     def __init__(self, latitude, longitude, pipeline_id, category, chainage_km, product_type, is_at_risk = False):
@@ -37,7 +36,7 @@ class SensorDevice:
             self.is_connected = False
 
         if self.is_connected:
-            drain = self.battery_drain + rng.gauss(0, 0.005)
+            drain = self.battery_drain_pct_per_pass + rng.gauss(0, 0.08)
             self.battery_level_raw = max(0.0, self.battery_level_raw - drain)
 
     @property
@@ -121,5 +120,40 @@ class ActuatorSensor(SensorDevice):
             "device_id": self.device_id,
             "timestamp": timestamp.isoformat(timespec='minutes'),
             "valve_open": self.valve_open,
+            "battery_level_pct": self.battery_level_pct,
+        }
+
+
+class FlowRateSensor(SensorDevice):
+    baseline_flow_lps = 100.0
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, category = "FlowRate", **kwargs)
+        self.flow_rate_lps = self.baseline_flow_lps
+
+
+    def step(self, rng: random.Random):
+        super().step(rng)
+        if not self.is_connected:
+            return
+        # Flow rate changes with some noise
+        max_drop = self.baseline_flow_lps * 0.6 # Flow drop will cap out at 60% baseline if at risk.
+        noise = rng.gauss(0, 1.5)
+        if self.is_at_risk:
+            # At risk sensors trend down to 60% of baseline following a logarithmic curve
+            drop = min(max_drop, 4 * math.log1p(self.tick))
+        else:
+            drop = 0.0
+
+        self.flow_rate_lps = max(0.0, self.baseline_flow_lps - drop + noise)
+
+
+    def reading(self, timestamp) -> dict:
+        if not self.is_connected:
+            return None
+        return {
+            "device_id": self.device_id,
+            "timestamp": timestamp.isoformat(timespec='minutes'),
+            "flow_rate_lps": round(self.flow_rate_lps, 2),
             "battery_level_pct": self.battery_level_pct,
         }

@@ -1,5 +1,5 @@
 import random
-from monitoring_point_hardware import EnvironmentalSensor, ActuatorSensor
+from monitoring_point_hardware import EnvironmentalSensor, ActuatorSensor, FlowRateSensor
 from generate_monitoring_points import generate_monitoring_points
 from pipeline_data import pipelines_raw
 
@@ -15,18 +15,18 @@ def build_monitoring_points(points_per_line=points, seed=set_seed):
 
     for r in raw_points:
         is_risk = rng.random() < risk_chance
-        product_type = pipelines_raw[r["pipeline_id"]]["type"]
 
         shared_args = dict(
             latitude=r["latitude"],
             longitude=r["longitude"],
             pipeline_id=r["pipeline_id"],
             chainage_km=r["approx_km_from_start"],
-            product_type=product_type,
+            product_type=r["pipeline_type"],
             is_at_risk=is_risk,
         )
 
         devices.append(EnvironmentalSensor(**shared_args))
         devices.append(ActuatorSensor(**shared_args))
+        devices.append(FlowRateSensor(**shared_args))
 
     return devices
