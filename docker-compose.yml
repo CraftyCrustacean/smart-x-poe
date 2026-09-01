@@ -9,6 +9,18 @@ services:
       timeout: 5s
       retries: 5
 
+  provisioner:
+    build:
+      context: ./simulator
+    environment:
+      - MQTT_HOST=mosquitto
+      - MQTT_PORT=1883
+      - PYTHONUNBUFFERED=1
+    command: ["python", "run_provision.py"]
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+
   simulator:
     build:
       context: ./simulator
@@ -19,3 +31,5 @@ services:
     depends_on:
       mosquitto:
         condition: service_healthy
+      provisioner:
+        condition: service_completed_successfully

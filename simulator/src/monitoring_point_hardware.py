@@ -8,13 +8,15 @@ class SensorDevice:
     disconnect_chance = 0.0015
 
 
-    def __init__(self, location_id, latitude, longitude, pipeline_id, category, is_at_risk = False):
-        self.device_id = f"{location_id}_{category}"
+    def __init__(self, latitude, longitude, pipeline_id, category, chainage_km, product_type, is_at_risk = False):
         self.mac_address = self.generate_mac()
+        self.device_id = f"ESP32-{self.mac_address.replace(':', '')}"
         self.latitude = latitude
         self.longitude = longitude
         self.pipeline_id = pipeline_id
         self.category = category
+        self.chainage_km = chainage_km
+        self.product_type = product_type
         self.is_at_risk = is_at_risk
         self.tick = 0
         self.is_connected = True
@@ -75,15 +77,10 @@ class EnvironmentalSensor(SensorDevice):
             return None
         return{
             "device_id": self.device_id,
-            "mac_address": self.mac_address,
-            "pipeline_id": self.pipeline_id,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "category": self.category,
-            "timestamp": timestamp,
-            "elevation_change_mm": self.elevation_change_mm,
-            "surface_temperature_c": self.surface_temperature_c,
-            "colour_shift_index": self.colour_shift_index,
+            "timestamp": timestamp.isoformat(timespec='minutes'),
+            "elevation_change_mm": round(self.elevation_change_mm, 2),
+            "surface_temperature_c": round(self.surface_temperature_c, 2),
+            "colour_shift_index": round(self.colour_shift_index, 4),
         }
 
 
@@ -117,12 +114,7 @@ class PowerSensor(SensorDevice):
             return None
         return {
             "device_id": self.device_id,
-            "mac_address": self.mac_address,
-            "pipeline_id": self.pipeline_id,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "category": self.category,
-            "timestamp": timestamp,
+            "timestamp": timestamp.isoformat(timespec='minutes'),
             "battery_level_pct": self.battery_level,
         }
 
@@ -151,11 +143,6 @@ class ActuatorSensor(SensorDevice):
             return None
         return {
             "device_id": self.device_id,
-            "mac_address": self.mac_address,
-            "pipeline_id": self.pipeline_id,
-            "latitude": self.latitude,
-            "longitude": self.longitude,
-            "category": self.category,
-            "timestamp": timestamp,
+            "timestamp": timestamp.isoformat(timespec='minutes'),
             "valve_open": self.valve_open,
         }

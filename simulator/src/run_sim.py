@@ -19,13 +19,13 @@ except Exception as e:
     exit(1)
 
 def publish_reading(reading):
-    topic = f"sensors/{reading['pipeline_id']}/{reading['category']}/{reading['device_id']}"
-    # If json gets a type it cant handle (eg. pythons datetime) convert it to a string
+    topic = f"sensors/telemetry"
+    # If json gets a type it cant handle fallback to a string
     payload = json.dumps(reading, default=str)
     client.publish(topic, payload)
 
 
-def backfill_history(devices, rng, num_passes, hours_per_pass=12):
+def backfill_history(devices, rng, num_passes, hours_per_pass=24):
 
     # Generate backdated historical data
     # Starting time is based on how many passes are requested and how long is between each pass
@@ -49,13 +49,14 @@ def run_live(devices, rng, pass_time, seconds_between_passes=10):
     # Simulate new readings continuously, sped up for demo purposes
     try:
         while True:
-            pass_time += timedelta(hours=12)
+            pass_time += timedelta(hours=24)
 
             for d in devices:
                 d.step(rng)
                 reading = d.reading(pass_time)
                 if reading is not None:
-                    publish_reading(reading)           
+                    publish_reading(reading)    
+                    print(f"Payload content: {reading}")       
             print(f"Published readings for pass at {pass_time.isoformat()}")
             time.sleep(seconds_between_passes)
     except KeyboardInterrupt:
@@ -63,7 +64,7 @@ def run_live(devices, rng, pass_time, seconds_between_passes=10):
         client.loop_stop()
         client.disconnect()
 
-def run_sim(historical_passes=180, seed=1):
+def run_sim(historical_passes=180, seed=2407):
     rng = random.Random(seed)
     devices = build_monitoring_points()
 
