@@ -22,6 +22,7 @@ def build_monitoring_points(points_per_line=points, seed=set_seed):
             pipeline_id=r["pipeline_id"],
             chainage_km=r["approx_km_from_start"],
             product_type=r["pipeline_type"],
+            rng=rng,
             is_at_risk=is_risk,
         )
 

@@ -8,8 +8,8 @@ class SensorDevice:
     battery_drain_pct_per_pass = 0.05
 
 
-    def __init__(self, latitude, longitude, pipeline_id, category, chainage_km, product_type, is_at_risk = False):
-        self.mac_address = self.generate_mac()
+    def __init__(self, latitude, longitude, pipeline_id, category, chainage_km, product_type, rng, is_at_risk = False):
+        self.mac_address = self.generate_mac(rng)
         self.device_id = f"ESP32-{self.mac_address.replace(':', '')}"
         self.latitude = latitude
         self.longitude = longitude
@@ -25,18 +25,20 @@ class SensorDevice:
 
     # Generate a random mac address
     @staticmethod
-    def generate_mac():
-        return ":".join(f"{random.randint(0, 255):02X}" for _ in range(6))
+    def generate_mac(rng: random.Random):
+        return ":".join(f"{rng.randint(0, 255):02X}" for _ in range(6))
 
 
-    # Move the simulation forward one tick with a random chance to disconnect a sensor
+    # Move the simulation forward one tick with a random chance to disconnect/reconnect a sensor
     def step(self, rng: random.Random):
         self.tick += 1
         if self.is_connected and rng.random() < self.disconnect_chance:
             self.is_connected = False
+        elif not self.is_connected and rng.random() < 0.05:  # 5% chance to reconnect
+            self.is_connected = True
 
         if self.is_connected:
-            drain = self.battery_drain_pct_per_pass + rng.gauss(0, 0.08)
+            drain = max(0.0, self.battery_drain_pct_per_pass + rng.gauss(0, 0.08))
             self.battery_level_raw = max(0.0, self.battery_level_raw - drain)
 
     @property
@@ -52,7 +54,7 @@ class EnvironmentalSensor(SensorDevice):
 
         # Baseline values, points move around this
         self.elevation_change_mm = 0.0
-        self.surface_temperature_c = 21.0
+        self.surface_temperature_c = 18.0
         self.colour_shift_index = 0.0
 
 
@@ -96,7 +98,7 @@ class EnvironmentalSensor(SensorDevice):
 
 class ActuatorSensor(SensorDevice):
 
-    switch_chance = 0.05
+    switch_chance = 0.01
 
 
     def __init__(self, *args, **kwargs):

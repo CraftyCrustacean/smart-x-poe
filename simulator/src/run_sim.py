@@ -11,7 +11,7 @@ mqtt_port = int(os.getenv("MQTT_PORT", "1883"))
 hours_per_pass = 24
 historical_pass_amount = 180
 simulated_pass_interval_seconds = 10  # Time between simulated passes in seconds
-random_seed = random.randint(0, 10000)  # Random seed for simulation, can be set to a fixed value for reproducibility
+random_seed = random.randint(0, 2**32 - 1)  # Random seed for reproducibility; can be set to a fixed value for consistent results
 
 # MQTT setup
 try:
