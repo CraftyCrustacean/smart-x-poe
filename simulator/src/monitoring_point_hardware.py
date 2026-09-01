@@ -6,6 +6,7 @@ import math
 class SensorDevice:
 
     disconnect_chance = 0.0015
+    battery_drain = 0.0025
 
 
     def __init__(self, latitude, longitude, pipeline_id, category, chainage_km, product_type, is_at_risk = False):
@@ -20,6 +21,7 @@ class SensorDevice:
         self.is_at_risk = is_at_risk
         self.tick = 0
         self.is_connected = True
+        self.battery_level_raw = 100.0
 
 
     # Generate a random mac address
@@ -33,6 +35,14 @@ class SensorDevice:
         self.tick += 1
         if self.is_connected and rng.random() < self.disconnect_chance:
             self.is_connected = False
+
+        if self.is_connected:
+            drain = self.battery_drain + rng.gauss(0, 0.005)
+            self.battery_level_raw = max(0.0, self.battery_level_raw - drain)
+
+    @property
+    def battery_level_pct(self) -> int:
+        return round(self.battery_level_raw)
 
 
 class EnvironmentalSensor(SensorDevice):
@@ -81,41 +91,7 @@ class EnvironmentalSensor(SensorDevice):
             "elevation_change_mm": round(self.elevation_change_mm, 2),
             "surface_temperature_c": round(self.surface_temperature_c, 2),
             "colour_shift_index": round(self.colour_shift_index, 4),
-        }
-
-
-class PowerSensor(SensorDevice):
-
-    battery_drain = 100/2190
-
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, category = "Power", **kwargs)
-        self.battery_level_raw = 100.0
-
-
-    def step(self, rng: random.Random):
-        super().step(rng)
-        if not self.is_connected:
-            return
-        # Randomly drain the battery every tick
-        drain = self.battery_drain + rng.gauss(0, 0.05)
-        self.battery_level_raw = max(0, self.battery_level_raw - drain)
-
-
-    # Assignment requires an int, this rounds it to be one
-    @property
-    def battery_level(self) -> int:
-        return round(self.battery_level_raw)
-
-
-    def reading(self, timestamp) -> dict:
-        if not self.is_connected:
-            return None
-        return {
-            "device_id": self.device_id,
-            "timestamp": timestamp.isoformat(timespec='minutes'),
-            "battery_level_pct": self.battery_level,
+            "battery_level_pct": self.battery_level_pct,
         }
 
 
@@ -145,4 +121,5 @@ class ActuatorSensor(SensorDevice):
             "device_id": self.device_id,
             "timestamp": timestamp.isoformat(timespec='minutes'),
             "valve_open": self.valve_open,
+            "battery_level_pct": self.battery_level_pct,
         }

@@ -1,5 +1,5 @@
 import random
-from monitoring_point_hardware import EnvironmentalSensor, PowerSensor, ActuatorSensor
+from monitoring_point_hardware import EnvironmentalSensor, ActuatorSensor
 from generate_monitoring_points import generate_monitoring_points
 from pipeline_data import pipelines_raw
 
@@ -27,7 +27,6 @@ def build_monitoring_points(points_per_line=points, seed=set_seed):
         )
 
         devices.append(EnvironmentalSensor(**shared_args))
-        devices.append(PowerSensor(**shared_args))
         devices.append(ActuatorSensor(**shared_args))
 
     return devices
