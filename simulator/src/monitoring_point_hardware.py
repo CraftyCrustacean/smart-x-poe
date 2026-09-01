@@ -99,11 +99,13 @@ class EnvironmentalSensor(SensorDevice):
 class ActuatorSensor(SensorDevice):
 
     switch_chance = 0.01
+    max_ticks_closed = 5 # Maximum ticks a valve can be closed before it is forced open again
 
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, category = "Actuator", **kwargs)
         self.valve_open = True
+        self.ticks_since_clossed = 0
 
 
     def step(self, rng: random.Random):
@@ -111,8 +113,15 @@ class ActuatorSensor(SensorDevice):
         if not self.is_connected:
             return
         # Every tick there is a chance a valves state changes
-        if rng.random() < self.switch_chance:
-            self.valve_open = not self.valve_open
+        if self.valve_open:
+            if rng.random() < self.switch_chance:
+                self.valve_open = False
+                self.ticks_since_clossed = 0
+        # If a valve is closed for too long it will be forced open
+        else:
+            self.ticks_since_clossed += 1
+            if self.ticks_since_clossed > self.max_ticks_closed:
+                self.valve_open = True
 
 
     def reading(self, timestamp) -> dict:
