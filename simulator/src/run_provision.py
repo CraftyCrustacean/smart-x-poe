@@ -49,12 +49,6 @@ def provision_all_devices():
 
         client.publish("devices/provision", json.dumps(payload))
 
-        if i == len(devices):
-            print(f"Last payload sent:\n{json.dumps(payload, indent=2)}")
-
-        if i % 100 == 0 or i == len(devices):
-            print(f"Provisioned {i}/{len(devices)} devices.")   
-
     time.sleep(1)  # Give the broker a moment to process the message
     client.loop_stop()
     client.disconnect()

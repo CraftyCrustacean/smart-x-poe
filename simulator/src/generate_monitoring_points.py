@@ -31,7 +31,7 @@ def generate_monitoring_points(points_per_line):
                 "point_index": i,
                 "longitude": lon,
                 "latitude": lat,
-                "approx_km_from_start": round(i * length_per_point, 1),
+                "approx_km_from_start": round(i * length_per_point, 2),
                 "pipeline_type": pipeline["type"],
             })
     return all_points

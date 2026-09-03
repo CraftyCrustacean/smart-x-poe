@@ -59,8 +59,7 @@ def run_live(devices, rng, pass_time, seconds_between_passes=simulated_pass_inte
                 d.step(rng)
                 reading = d.reading(pass_time)
                 if reading is not None:
-                    publish_reading(reading)    
-                    print(f"Payload content: {reading}")       
+                    publish_reading(reading)     
             print(f"Published readings for pass at {pass_time.isoformat()}")
             time.sleep(seconds_between_passes)
     except KeyboardInterrupt:

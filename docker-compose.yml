@@ -33,3 +33,23 @@ services:
         condition: service_healthy
       provisioner:
         condition: service_completed_successfully
+
+  timescaledb:
+    image: timescale/timescaledb:latest-pg18
+    volumes:
+     - ./init-db:/docker-entrypoint-initdb.d
+     - timescaledb_data:/var/lib/postgresql
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+
+volumes:
+  timescaledb_data:  

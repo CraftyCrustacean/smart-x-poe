@@ -14,29 +14,29 @@ A school project for the module Prog7312. It simulates pipeline telemetry and pr
 	- If not enabled do so in your BIOS/UEFI settings.
 - Enable Windows Features
 	- Open PowerShell as Administrator and run: 
-	```
-	dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
-	wsl --update
-	```
+	    ```
+	    dism.exe /online /enable-feature /featurename:VirtualMachinePlatform /all /norestart
+	    wsl --update
+	    ```
 	- Reboot your PC after running these commands.
 
 ## Step 2: Clone the repository
 - Open your terminal or PowerShell and clone the project:
-```bash
-git clone https://github.com/your-org/smart-x-poe.git
-cd smart-x-poe
-```
+    ```bash
+    git clone https://github.com/your-org/smart-x-poe.git
+    cd smart-x-poe
+    ```
 
 ## Step 3: Launch with Docker Compose
 - Make sure you're in the smart-x-poe directory and run this command:
-```bash
-docker compose up --build
-```
+    ```bash
+    docker compose up --build
+    ```
 - The terminal should display logs as they are simulated.
 
 ## Step 4: Shut Down the Environment
 - In the terminal press CTRL + C to stop the simulator
 - To clean up container run:
-```bash 
-docker compose down
-```
+    ```bash 
+    docker compose down
+    ```

@@ -130,7 +130,7 @@ class ActuatorSensor(SensorDevice):
         return {
             "device_id": self.device_id,
             "timestamp": timestamp.isoformat(timespec='minutes'),
-            "valve_open": self.valve_open,
+            "valve_state": self.valve_open,
             "battery_level_pct": self.battery_level_pct,
         }
 
