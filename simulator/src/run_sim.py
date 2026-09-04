@@ -12,7 +12,7 @@ hours_per_pass = 24
 historical_pass_amount = 180
 simulated_pass_interval_seconds = 10  # Time between simulated passes in seconds
 random_seed = random.randint(0, 2**32 - 1)  # Random seed for reproducibility; can be set to a fixed value for consistent results
-
+random_minute_limit = 4
 # MQTT setup
 try:
     client = mqtt.Client()  
@@ -28,6 +28,10 @@ def publish_reading(reading):
     payload = json.dumps(reading, default=str)
     client.publish(topic, payload)
 
+def random_time(pass_time, rng, random_minute=random_minute_limit):
+    offset_minute = rng.randint(-random_minute, random_minute)
+    return pass_time + timedelta(minutes=offset_minute)
+
 
 def backfill_history(devices, rng, num_passes, hours_per_pass=hours_per_pass):
 
@@ -40,8 +44,9 @@ def backfill_history(devices, rng, num_passes, hours_per_pass=hours_per_pass):
         pass_time += timedelta(hours=hours_per_pass)
 
         for d in devices:
+            publish_time = random_time(pass_time, rng)
             d.step(rng)
-            reading = d.reading(pass_time)
+            reading = d.reading(publish_time)
             if reading is not None:
                 publish_reading(reading)
 
@@ -57,9 +62,11 @@ def run_live(devices, rng, pass_time, seconds_between_passes=simulated_pass_inte
 
             for d in devices:
                 d.step(rng)
-                reading = d.reading(pass_time)
+                publish_time = random_time(pass_time, rng)
+                reading = d.reading(publish_time)
                 if reading is not None:
-                    publish_reading(reading)     
+                    publish_reading(reading)  
+                    print(reading)   
             print(f"Published readings for pass at {pass_time.isoformat()}")
             time.sleep(seconds_between_passes)
     except KeyboardInterrupt:
