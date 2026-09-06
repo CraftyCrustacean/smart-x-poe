@@ -1,7 +1,9 @@
 using System.Text;
+using Microsoft.Extensions.Options;
 using MQTTnet;
 using MQTTnet.Packets;
 using MQTTnet.Protocol;
+using smart_x_poe.backend.Settings;
 
 namespace smart_x_poe.backend.BackgroundServices;
 
@@ -11,16 +13,19 @@ public class MqttWorker : BackgroundService
     private readonly IMqttClient _mqttClient;
     private readonly MqttClientOptions _mqttClientOptions;
     private readonly MqttClientSubscribeOptions _mqttSubscribeOptions;
+    private readonly MqttSettings _mqttSettings;
 
-    public MqttWorker(ILogger<MqttWorker> logger)
+    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings)
     {
-        string broker = "mosquitto";
-        int port = 1883;
+
+        _logger = logger;
+        _mqttSettings = mqttSettings.Value;
+
+        string broker = _mqttSettings.MqttHost;
+        int port = _mqttSettings.MqttPort;
         string clientId = "dev_test";
         string provisionTopic = "devices/provision";
         string telemetryTopic = "sensors/telemetry";
-
-        _logger = logger;
 
         // Setup for the client.
         var mqttFactory = new MqttClientFactory();

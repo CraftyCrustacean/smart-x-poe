@@ -54,6 +54,9 @@ services:
   backend:
     build:
       context: ./backend
+    environment:
+      - MqttSettings__MqttHost=mosquitto
+      - MqttSettings__MqttPort=1883
     depends_on:
       mosquitto:
         condition: service_healthy
