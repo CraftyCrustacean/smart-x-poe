@@ -28,7 +28,7 @@ CREATE TABLE environmental_sensors (
 CREATE TABLE actuator_sensors (
 	device_id TEXT REFERENCES devices(device_id),
 	"timestamp" TIMESTAMPTZ NOT NULL,
-	valve_state BOOL NOT NULL,
+	valve_open BOOL NOT NULL,
 	PRIMARY KEY("timestamp", device_id)
 )WITH (timescaledb.hypertable);
 
