@@ -51,7 +51,7 @@ public class MqttWorker : BackgroundService
         {
             var topic = e.ApplicationMessage.Topic;
             var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
-            _logger.LogInformation("Recieved message for {Topic} with content {Message}.", topic, message);
+            //_logger.LogInformation("Recieved message for {Topic} with content {Message}.", topic, message);
 
             return Task.CompletedTask;
         };
