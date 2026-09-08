@@ -1,9 +1,11 @@
-using smart_x_poe.backend.BackgroundServices;
-using smart_x_poe.backend.Settings;
+using backend.BackgroundServices;
+using backend.Services;
+using backend.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHostedService<MqttWorker>();
+builder.Services.AddSingleton<DeviceRegistry>();
 builder.Services.Configure<MqttSettings>(builder.Configuration.GetSection(MqttSettings.MqttSettingsName));
 builder.Services.AddHealthChecks();
 

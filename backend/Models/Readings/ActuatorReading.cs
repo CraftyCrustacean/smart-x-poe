@@ -1,8 +1,7 @@
-﻿using smart_x_poe.backend.Models.Telemetry;
-using System;
+﻿using backend.Models.Telemetry;
 using System.Text.Json.Serialization;
 
-namespace smart_x_poe.backend.Models.Readings;
+namespace backend.Models.Readings;
 
 public class ActuatorReading
 {

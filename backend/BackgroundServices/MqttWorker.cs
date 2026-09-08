@@ -1,11 +1,12 @@
 using System.Text;
 using Microsoft.Extensions.Options;
 using MQTTnet;
-using MQTTnet.Packets;
-using MQTTnet.Protocol;
-using smart_x_poe.backend.Settings;
+using backend.Settings;
+using backend.Services;
+using static backend.Models.Provision.ProvisionData;
+using System.Text.Json.Serialization;
 
-namespace smart_x_poe.backend.BackgroundServices;
+namespace backend.BackgroundServices;
 
 public class MqttWorker : BackgroundService
 {
@@ -14,10 +15,12 @@ public class MqttWorker : BackgroundService
     private readonly MqttClientOptions _mqttClientOptions;
     private readonly MqttClientSubscribeOptions _mqttSubscribeOptions;
     private readonly MqttSettings _mqttSettings;
+    private readonly DeviceRegistry _deviceRegistry;
 
-    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings)
+    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, DeviceRegistry deviceRegistry)
     {
 
+        _deviceRegistry = deviceRegistry;
         _logger = logger;
         _mqttSettings = mqttSettings.Value;
 
@@ -51,6 +54,15 @@ public class MqttWorker : BackgroundService
         {
             var topic = e.ApplicationMessage.Topic;
             var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
+
+            if (topic == "devices/provision")
+            {
+                
+            }
+            else if (topic == "sensors/telemetry")
+            {
+
+            }
 
             // This will flood your terminal.
             //_logger.LogInformation("Recieved message for {Topic} with content {Message}.", topic, message);

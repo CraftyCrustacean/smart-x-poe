@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace smart_x_poe.backend.Settings;
+﻿namespace backend.Settings;
 
 public class MqttSettings
 {

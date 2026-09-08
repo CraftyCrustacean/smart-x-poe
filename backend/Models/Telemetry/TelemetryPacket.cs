@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace smart_x_poe.backend.Models.Telemetry;
+﻿namespace backend.Models.Telemetry;
 
 public class TelemetryPacket
 {
