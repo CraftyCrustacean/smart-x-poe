@@ -73,7 +73,7 @@ class EnvironmentalSensor(SensorDevice):
         noise = rng.gauss(0, 0.8)
         anomaly = 0
         if self.is_at_risk and rng.random() < 0.08:
-            # Add a number between 3 and 7 to at tisk sensors
+            # Add a number between 3 and 7 to at risk sensors
             anomaly = rng.uniform(3,7)
         self.surface_temperature_c = 18 + noise + anomaly
 

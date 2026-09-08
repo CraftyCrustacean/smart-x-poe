@@ -847,6 +847,9 @@ FodyWeavers.xsd
 # JetBrains Rider
 *.sln.iml
 
+# Random AI nonsense added by visual studio 2026 automatically
+copilot-instructions.md
+
 ### VisualStudio Patch ###
 # Additional files built by Visual Studio
 
