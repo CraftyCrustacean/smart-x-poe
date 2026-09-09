@@ -19,19 +19,10 @@ public class ProvisionData
     public required DateTime ProvisionedAt { get; set; }
     [JsonPropertyName("status")]
     public required DeviceStatus Status { get; set; }
-    [JsonPropertyName("latitude")]
-    public required float Latitude { get; set; }
-    [JsonPropertyName("longitude")]
-    public required float Longitude { get; set; }
-    [JsonPropertyName("chainage_km")]
-    public required float Chainage { get; set; }
-    [JsonPropertyName("region")]
-    public required string Region { get; set; }
-    [JsonPropertyName("zone")]
-    public required string Zone { get; set; }
-    [JsonPropertyName("subzone")]
-    public required string Subzone { get; set; }
-
+    [JsonPropertyName("location")]
+    public required LocationData LocationData { get; set; }
+    [JsonPropertyName("topology")]
+    public required TopologyData TopologyData { get; set; }
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public enum DeviceCategory
     {

@@ -6,6 +6,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddHostedService<MqttWorker>();
 builder.Services.AddSingleton<DeviceRegistry>();
+builder.Services.AddSingleton<TelemetryBatcher>();
 builder.Services.Configure<MqttSettings>(builder.Configuration.GetSection(MqttSettings.MqttSettingsName));
 builder.Services.AddHealthChecks();
 

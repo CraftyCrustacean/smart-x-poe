@@ -33,24 +33,24 @@ def random_time(pass_time, rng, random_minute=random_minute_limit):
     return pass_time + timedelta(minutes=offset_minute)
 
 
-def backfill_history(devices, rng, num_passes, hours_per_pass=hours_per_pass):
+# def backfill_history(devices, rng, num_passes, hours_per_pass=hours_per_pass):
 
-    # Generate backdated historical data
-    # Starting time is based on how many passes are requested and how long is between each pass
-    start_time = datetime.now(timezone.utc) - timedelta(hours=hours_per_pass * num_passes)
-    pass_time = start_time
+#     # Generate backdated historical data
+#     # Starting time is based on how many passes are requested and how long is between each pass
+#     start_time = datetime.now(timezone.utc) - timedelta(hours=hours_per_pass * num_passes)
+#     pass_time = start_time
 
-    for pass_num in range(1, num_passes + 1):
-        pass_time += timedelta(hours=hours_per_pass)
+#     for pass_num in range(1, num_passes + 1):
+#         pass_time += timedelta(hours=hours_per_pass)
 
-        for d in devices:
-            publish_time = random_time(pass_time, rng)
-            d.step(rng)
-            reading = d.reading(publish_time)
-            if reading is not None:
-                publish_reading(reading)
+#         for d in devices:
+#             publish_time = random_time(pass_time, rng)
+#             d.step(rng)
+#             reading = d.reading(publish_time)
+#             if reading is not None:
+#                 publish_reading(reading)
 
-    return pass_time
+#     return pass_time
 
 
 def run_live(devices, rng, pass_time, seconds_between_passes=simulated_pass_interval_seconds):
@@ -77,11 +77,12 @@ def run_sim(historical_passes=historical_pass_amount, seed=random_seed):
     rng = random.Random(seed)
     devices = build_monitoring_points()
 
-    print(f"Backfilling {historical_passes} historical passes...")
-    last_pass_time = backfill_history(devices, rng, historical_passes)
+    # print(f"Backfilling {historical_passes} historical passes...")
+    # last_pass_time = backfill_history(devices, rng, historical_passes)
 
-    print("Backfill complete. Switching to live simulation...")
-    run_live(devices, rng, last_pass_time)
+    # print("Backfill complete. Switching to live simulation...")
+    start_time = datetime.now(timezone.utc)
+    run_live(devices, rng, start_time)
 
 
 if __name__ == "__main__":

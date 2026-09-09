@@ -4,10 +4,10 @@ using MQTTnet;
 using backend.Settings;
 using backend.Services;
 using static backend.Models.Provision.ProvisionData;
-using System.Text.Json.Serialization;
 using System.Text.Json;
 using backend.Models.Provision;
 using backend.Models.Readings;
+using backend.Models.Telemetry;
 
 namespace backend.BackgroundServices;
 
@@ -18,14 +18,16 @@ public class MqttWorker : BackgroundService
     private readonly MqttClientOptions _mqttClientOptions;
     private readonly MqttClientSubscribeOptions _mqttSubscribeOptions;
     private readonly MqttSettings _mqttSettings;
+    private readonly TelemetryBatcher _telemetryBatcher;
     private readonly DeviceRegistry _deviceRegistry;
 
-    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, DeviceRegistry deviceRegistry)
+    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher)
     {
 
         _deviceRegistry = deviceRegistry;
         _logger = logger;
         _mqttSettings = mqttSettings.Value;
+        _telemetryBatcher = telemetryBatcher;
 
         string broker = _mqttSettings.MqttHost;
         int port = _mqttSettings.MqttPort;
@@ -60,14 +62,23 @@ public class MqttWorker : BackgroundService
 
             if (topic == "devices/provision")
             {
-                ProvisionData? provisionData = JsonSerializer.Deserialize<ProvisionData>(message);
-                if (provisionData != null)
+                try
                 {
-                    _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
+                    ProvisionData? provisionData = JsonSerializer.Deserialize<ProvisionData>(message);
+
+                    if (provisionData != null)
+                    {
+                        _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
+                    }
+                    else
+                    {
+                        _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                    }
+
                 }
-                else
+                catch (Exception ex)
                 {
-                    _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                    _logger.LogError($"Something went wrong: {ex}");
                 }
                 
             }
@@ -93,7 +104,8 @@ public class MqttWorker : BackgroundService
                             EnvironmentalReading? environmentalReading = JsonSerializer.Deserialize<EnvironmentalReading>(message);
                             if (environmentalReading != null)
                             {
-                                environmentalReading.ToPackets();
+                                List<TelemetryPacket> envPackets = environmentalReading.ToPackets();
+                                _telemetryBatcher.AddPackets(envPackets);
                             }
                             else
                             {
@@ -105,7 +117,8 @@ public class MqttWorker : BackgroundService
                             ActuatorReading? actuatorReading = JsonSerializer.Deserialize<ActuatorReading>(message);
                             if (actuatorReading != null)
                             {
-                                actuatorReading.ToPackets();
+                                List<TelemetryPacket> actPackets = actuatorReading.ToPackets();
+                                _telemetryBatcher.AddPackets(actPackets);
                             }
                             else
                             {
@@ -117,7 +130,8 @@ public class MqttWorker : BackgroundService
                             FlowRateReading? flowRateReading = JsonSerializer.Deserialize<FlowRateReading>(message);
                             if (flowRateReading != null)
                             {
-                                flowRateReading.ToPackets();
+                                List<TelemetryPacket> flowPackets = flowRateReading.ToPackets();
+                                _telemetryBatcher.AddPackets(flowPackets);
                             }
                             else
                             {
