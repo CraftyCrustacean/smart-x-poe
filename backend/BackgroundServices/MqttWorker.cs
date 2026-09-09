@@ -5,6 +5,9 @@ using backend.Settings;
 using backend.Services;
 using static backend.Models.Provision.ProvisionData;
 using System.Text.Json.Serialization;
+using System.Text.Json;
+using backend.Models.Provision;
+using backend.Models.Readings;
 
 namespace backend.BackgroundServices;
 
@@ -57,11 +60,76 @@ public class MqttWorker : BackgroundService
 
             if (topic == "devices/provision")
             {
+                ProvisionData? provisionData = JsonSerializer.Deserialize<ProvisionData>(message);
+                if (provisionData != null)
+                {
+                    _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
+                }
+                else
+                {
+                    _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                }
                 
             }
             else if (topic == "sensors/telemetry")
             {
+                using var jsonDocument = JsonDocument.Parse(message);
+                var rootElement = jsonDocument.RootElement;
+                var deviceIdJsonElement = rootElement.GetProperty("device_id");
+                var deviceId = deviceIdJsonElement.GetString();
+                DeviceCategory category;
 
+                if (deviceId != null)
+                {
+                    if (!_deviceRegistry.GetDeviceCategory(deviceId, out category))
+                    {
+                        _logger.LogWarning($"Failed to find category for device with id: {deviceId}. Unknown Category.");
+                    }
+                    else
+                    {
+                        if (category == DeviceCategory.Environmental)
+                        {
+                            // Warning repition could use some clean up if time allows.
+                            EnvironmentalReading? environmentalReading = JsonSerializer.Deserialize<EnvironmentalReading>(message);
+                            if (environmentalReading != null)
+                            {
+                                environmentalReading.ToPackets();
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                            }
+                        }
+                        else if (category == DeviceCategory.Actuator)
+                        {
+                            ActuatorReading? actuatorReading = JsonSerializer.Deserialize<ActuatorReading>(message);
+                            if (actuatorReading != null)
+                            {
+                                actuatorReading.ToPackets();
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                            }
+                        }
+                        else if (category == DeviceCategory.FlowRate)
+                        {
+                            FlowRateReading? flowRateReading = JsonSerializer.Deserialize<FlowRateReading>(message);
+                            if (flowRateReading != null)
+                            {
+                                flowRateReading.ToPackets();
+                            }
+                            else
+                            {
+                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    _logger.LogWarning($"Failed to find device id, possibly malformed message");
+                }
             }
 
             // This will flood your terminal.
