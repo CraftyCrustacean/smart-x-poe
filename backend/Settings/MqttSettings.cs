@@ -3,6 +3,6 @@
 public class MqttSettings
 {
 	public const string MqttSettingsName = "MqttSettings";
-	public string MqttHost { get; set; }
-	public int MqttPort { get; set; }
+	public required string MqttHost { get; set; }
+	public required int MqttPort { get; set; }
 }

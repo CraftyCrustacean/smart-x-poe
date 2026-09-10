@@ -12,17 +12,19 @@ public class TelemetryProcessor
     private readonly TelemetryBatcher _telemetryBatcher;
     private readonly EnvironmentalHistory _environmentalHistory;
     private readonly DeviceRegistry _deviceRegistry;
+    private readonly DeviceStore _deviceStore;
 
-    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory) 
+    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory, DeviceStore deviceStore) 
     {
 
         _environmentalHistory = environmentalHistory;
         _deviceRegistry = deviceRegistry;
         _logger = logger;
         _telemetryBatcher = telemetryBatcher;
+        _deviceStore = deviceStore;
     }
 
-    public void ProcessProvisioning(string message)
+    public async Task ProcessProvisioning(string message)
     {
 
         try
@@ -32,6 +34,7 @@ public class TelemetryProcessor
             if (provisionData != null)
             {
                 _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
+                await _deviceStore.UpsertDevice(provisionData);
             }
             else
             {

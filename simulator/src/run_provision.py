@@ -8,6 +8,7 @@ from build_points import build_monitoring_points
 
 MQTT_HOST = os.getenv("MQTT_HOST", "mosquitto")
 MQTT_PORT = int(os.getenv("MQTT_PORT", "1883"))
+PUBLISH_TIMEOUT_SECONDS = 30.0
 
 subzone_length_km = 50  # Length of each subzone in kilometers
 
@@ -22,6 +23,8 @@ def provision_all_devices():
 
     devices = build_monitoring_points()
     provisioned_at = datetime.now(timezone.utc).isoformat(timespec='minutes')
+
+    publish_results = []
 
     # Send static information for each device, simulating technicians provisioning the devices.
     for i, device in enumerate(devices, start=1):
@@ -47,12 +50,21 @@ def provision_all_devices():
             }
         }
 
-        client.publish("devices/provision", json.dumps(payload))
+        result = client.publish("devices/provision", json.dumps(payload), qos=1)
+        publish_results.append((device.device_id, result))
 
-    time.sleep(1)  # Give the broker a moment to process the message
+    for device_id, result in publish_results:
+        try:
+                result.wait_for_publish(timeout=PUBLISH_TIMEOUT_SECONDS)
+        except ValueError:
+                client.loop_stop()
+                client.disconnect()
+                print(f"Error: Timeout waiting for MQTT PUBACK on device {device_id} after {PUBLISH_TIMEOUT_SECONDS}s.")
+                exit(1)
+
     client.loop_stop()
     client.disconnect()
-    print(f"Provisioning complete. {len(devices)} devices provisioned.")
+    print(f"Provisioning complete. {len(devices)} devices provisioned and confirmed.")
 
 if __name__ == "__main__":
     provision_all_devices()

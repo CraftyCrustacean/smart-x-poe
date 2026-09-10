@@ -14,12 +14,14 @@ public class MqttWorker : BackgroundService
     private readonly MqttClientSubscribeOptions _mqttSubscribeOptions;
     private readonly MqttSettings _mqttSettings;
     private readonly TelemetryProcessor _telemetryProcessor;
+    private readonly MqttConnectionStatus _mqttConnectionStatus;
 
-    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, TelemetryProcessor telemetryProcessor)
+    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, TelemetryProcessor telemetryProcessor, MqttConnectionStatus mqttConnectionStatus)
     {
         _logger = logger;
         _mqttSettings = mqttSettings.Value;
         _telemetryProcessor = telemetryProcessor;
+        _mqttConnectionStatus = mqttConnectionStatus;
 
         string broker = _mqttSettings.MqttHost;
         int port = _mqttSettings.MqttPort;
@@ -37,7 +39,7 @@ public class MqttWorker : BackgroundService
             .Build();
 
         _mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(t => t.WithTopic(provisionTopic))
+            .WithTopicFilter(t => t.WithTopic(provisionTopic).WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce))
             .WithTopicFilter(t => t.WithTopic(telemetryTopic))
             .Build();
 
@@ -47,7 +49,7 @@ public class MqttWorker : BackgroundService
     public void HandleMqttEvent()
     {
         // Handle incoming message.
-        _mqttClient.ApplicationMessageReceivedAsync += e =>
+        _mqttClient.ApplicationMessageReceivedAsync += async e =>
         {
             var topic = e.ApplicationMessage.Topic;
             var message = Encoding.UTF8.GetString(e.ApplicationMessage.Payload);
@@ -55,7 +57,7 @@ public class MqttWorker : BackgroundService
             if (topic == "devices/provision")
             {
 
-                _telemetryProcessor.ProcessProvisioning(message);
+                await _telemetryProcessor.ProcessProvisioning(message);
                 
             }
             else if (topic == "sensors/telemetry")
@@ -68,7 +70,6 @@ public class MqttWorker : BackgroundService
             // This will flood your terminal.
             //_logger.LogInformation("Recieved message for {Topic} with content {Message}.", topic, message);
 
-            return Task.CompletedTask;
         };
     }
 
@@ -90,12 +91,13 @@ public class MqttWorker : BackgroundService
                         // Check if a session exists, if it doesnt subscribe to the topics.
                         if (connectResult.IsSessionPresent)
                         {
+                            _mqttConnectionStatus.IsSubscribed = true;
                             _logger.LogInformation("Session was found, queued messages and subscription were preserved.");
                         }
                         else
                         {
                             await _mqttClient.SubscribeAsync(_mqttSubscribeOptions, stoppingToken);
-
+                            _mqttConnectionStatus.IsSubscribed = true;
                             _logger.LogInformation("No session was found, subscribed to topics.");
                         }
                     }

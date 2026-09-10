@@ -1,11 +1,13 @@
 services:
   mosquitto:
     image: eclipse-mosquitto
+    volumes:
+      - ./mosquitto/mosquitto.conf:/mosquitto/config/mosquitto.conf
     ports:
       - "1883:1883"
     healthcheck:
       test: ["CMD-SHELL", "mosquitto_sub -t '$$SYS/#' -C 1 -i healthcheck -W 3 || exit 1"]
-      interval: 30s
+      interval: 2s
       timeout: 5s
       retries: 5
 
@@ -19,6 +21,8 @@ services:
     command: ["python", "run_provision.py"]
     depends_on:
       mosquitto:
+        condition: service_healthy
+      backend:
         condition: service_healthy
 
   simulator:
@@ -43,9 +47,9 @@ services:
       - "5432:5432"
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 30s
+      interval: 2s
       timeout: 5s
-      retries: 5
+      retries: 10
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
@@ -57,6 +61,11 @@ services:
     environment:
       - MqttSettings__MqttHost=mosquitto
       - MqttSettings__MqttPort=1883
+      - DbSettings__DbHost=timescaledb
+      - DbSettings__DbPort=5432
+      - DbSettings__DbName=${POSTGRES_DB}
+      - DbSettings__DbUser=${POSTGRES_USER}
+      - DbSettings__DbPassword=${POSTGRES_PASSWORD}
     depends_on:
       mosquitto:
         condition: service_healthy
@@ -66,9 +75,9 @@ services:
       - "8080:8080"
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
-      interval: 30s
+      interval: 2s
       timeout: 5s
-      retries: 5
+      retries: 10
 
 volumes:
   timescaledb_data:  
