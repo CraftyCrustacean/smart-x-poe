@@ -85,8 +85,8 @@ public class EnvironmentalDelta
     public required string DeviceId { get; set; }
     public required DateTime FromTimestamp { get; set; }
     public required DateTime ToTimestamp { get; set; }
-    public float RateOfElevationChange { get; set; }
-    public float SurfaceTempDelta { get; set; }
-    public float RateOfColourShift { get; set; }
+    public required float RateOfElevationChange { get; set; }
+    public required float SurfaceTempDelta { get; set; }
+    public required float RateOfColourShift { get; set; }
 
 }

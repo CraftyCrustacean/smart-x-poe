@@ -36,4 +36,24 @@ public class FlowRateReading
 
         return allFlowRatePackets;
     }
+
+    public static FlowRateAggregate operator + (FlowRateReading firstReading, FlowRateReading secondReading)
+    {
+        return new FlowRateAggregate
+        {
+
+            FlowRateTotal = firstReading.FlowRate + secondReading.FlowRate,
+            TimeStamp = firstReading.TimeStamp,
+
+        };
+    }
+
+}
+
+public class FlowRateAggregate
+{
+    public string? LocationId { get; set;}
+    public required DateTime TimeStamp { get; set;}
+    public required float FlowRateTotal { get; set; }
+
 }
