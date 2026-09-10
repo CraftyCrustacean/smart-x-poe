@@ -69,31 +69,6 @@ public class TelemetryBatcher
                 _recentPackets[_writeIndex] = batchItem;
                 _writeIndex = (_writeIndex + 1) % _recentPackets.Length;
                 _currentAnchor = null;
-
-                var lastPacket = _packetsThisBatch.Last();
-                
-                if (lastPacket is TelemetryPacket<float> floatPacket)
-                {
-                    var metricName = floatPacket.MetricName;
-                    var value = floatPacket.Value;
-                    _logger.LogInformation($"Last packet contains {metricName}: {value}");
-                }
-                else if (lastPacket is TelemetryPacket<int> intPacket)
-                {
-                    var metricName = intPacket.MetricName;
-                    var value = intPacket.Value;
-                    _logger.LogInformation($"Last packet contains {metricName}: {value}");
-
-
-                }
-                else if (lastPacket is TelemetryPacket<bool> boolPacket )
-                {
-                    var metricName = boolPacket.MetricName;
-                    var value = boolPacket.Value;
-                    _logger.LogInformation($"Last packet contains {metricName}: {value}");
-
-                }
-
                 _packetsThisBatch = [];
 
                 _logger.LogInformation("Batch completed");

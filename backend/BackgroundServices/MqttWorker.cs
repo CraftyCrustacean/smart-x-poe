@@ -3,11 +3,6 @@ using Microsoft.Extensions.Options;
 using MQTTnet;
 using backend.Settings;
 using backend.Services;
-using static backend.Models.Provision.ProvisionData;
-using System.Text.Json;
-using backend.Models.Provision;
-using backend.Models.Readings;
-using backend.Models.Telemetry;
 
 namespace backend.BackgroundServices;
 
@@ -18,16 +13,13 @@ public class MqttWorker : BackgroundService
     private readonly MqttClientOptions _mqttClientOptions;
     private readonly MqttClientSubscribeOptions _mqttSubscribeOptions;
     private readonly MqttSettings _mqttSettings;
-    private readonly TelemetryBatcher _telemetryBatcher;
-    private readonly DeviceRegistry _deviceRegistry;
+    private readonly TelemetryProcessor _telemetryProcessor;
 
-    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher)
+    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, TelemetryProcessor telemetryProcessor)
     {
-
-        _deviceRegistry = deviceRegistry;
         _logger = logger;
         _mqttSettings = mqttSettings.Value;
-        _telemetryBatcher = telemetryBatcher;
+        _telemetryProcessor = telemetryProcessor;
 
         string broker = _mqttSettings.MqttHost;
         int port = _mqttSettings.MqttPort;
@@ -62,88 +54,15 @@ public class MqttWorker : BackgroundService
 
             if (topic == "devices/provision")
             {
-                try
-                {
-                    ProvisionData? provisionData = JsonSerializer.Deserialize<ProvisionData>(message);
 
-                    if (provisionData != null)
-                    {
-                        _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
-                    }
-
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError($"Something went wrong: {ex}");
-                }
+                _telemetryProcessor.ProcessProvisioning(message);
                 
             }
             else if (topic == "sensors/telemetry")
             {
-                using var jsonDocument = JsonDocument.Parse(message);
-                var rootElement = jsonDocument.RootElement;
-                var deviceIdJsonElement = rootElement.GetProperty("device_id");
-                var deviceId = deviceIdJsonElement.GetString();
-                DeviceCategory category;
+                
+                _telemetryProcessor.ProcessTelemetry(message);
 
-                if (deviceId != null)
-                {
-                    if (!_deviceRegistry.GetDeviceCategory(deviceId, out category))
-                    {
-                        _logger.LogWarning($"Failed to find category for device with id: {deviceId}. Unknown Category.");
-                    }
-                    else
-                    {
-                        if (category == DeviceCategory.Environmental)
-                        {
-                            // Warning repition could use some clean up if time allows.
-                            EnvironmentalReading? environmentalReading = JsonSerializer.Deserialize<EnvironmentalReading>(message);
-                            if (environmentalReading != null)
-                            {
-                                List<TelemetryPacket> envPackets = environmentalReading.ToPackets();
-                                _telemetryBatcher.AddPackets(envPackets);
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
-                            }
-                        }
-                        else if (category == DeviceCategory.Actuator)
-                        {
-                            ActuatorReading? actuatorReading = JsonSerializer.Deserialize<ActuatorReading>(message);
-                            if (actuatorReading != null)
-                            {
-                                List<TelemetryPacket> actPackets = actuatorReading.ToPackets();
-                                _telemetryBatcher.AddPackets(actPackets);
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
-                            }
-                        }
-                        else if (category == DeviceCategory.FlowRate)
-                        {
-                            FlowRateReading? flowRateReading = JsonSerializer.Deserialize<FlowRateReading>(message);
-                            if (flowRateReading != null)
-                            {
-                                List<TelemetryPacket> flowPackets = flowRateReading.ToPackets();
-                                _telemetryBatcher.AddPackets(flowPackets);
-                            }
-                            else
-                            {
-                                _logger.LogWarning($"Failed to deserialise {message} from topic {topic}.");
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    _logger.LogWarning($"Failed to find device id, possibly malformed message");
-                }
             }
 
             // This will flood your terminal.
