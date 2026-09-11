@@ -7,12 +7,10 @@ namespace backend.Services;
 
 public class DeviceStore
 {
-    private readonly ILogger<DeviceStore> _logger;
     private readonly NpgsqlDataSource _dataSource;
 
-    public DeviceStore(ILogger<DeviceStore> logger, NpgsqlDataSource dataSource) 
+    public DeviceStore(NpgsqlDataSource dataSource)
     {
-        _logger = logger;
         _dataSource = dataSource;
     }
 
@@ -89,5 +87,21 @@ public class DeviceStore
 
         return devices;
     }
-}
 
+    public async Task<bool> DeviceExists(string deviceId)
+    {
+        const string sql = @"
+        SELECT EXISTS (
+            SELECT 1 
+            FROM devices 
+            WHERE device_id = $1
+        );";
+
+        await using var command = _dataSource.CreateCommand(sql);
+        command.Parameters.AddWithValue(deviceId);
+
+        var result = await command.ExecuteScalarAsync();
+
+        return result is bool exists && exists;
+    }
+}

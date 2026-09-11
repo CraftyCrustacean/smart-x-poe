@@ -64,7 +64,7 @@ public class FlowRateAggregate
         t = new DateTime(t.Year, t.Month, t.Day, t.Hour, 0, 0, t.Kind);
         t1 = new DateTime(t1.Year, t1.Month, t1.Day, t1.Hour, 0, 0, t1.Kind);
 
-        if (t != t1) { throw new ArgumentException($"Cannot aggregate flow rates across different batches."); }
+        //if (t != t1) { throw new ArgumentException($"Cannot aggregate flow rates across different batches."); }
         return new FlowRateAggregate
         {
 

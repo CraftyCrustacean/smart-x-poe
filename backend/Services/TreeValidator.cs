@@ -36,20 +36,26 @@ public static class TreeValidator
 
     private static void ValidateSubZoneRules(SubZone subZone, List<string> errors)
     {
-        var nodes = subZone.Nodes;
+        var nodesByCategory = subZone.Nodes.GroupBy(node => node.Category);
 
-        for (int i = 0; i < nodes.Count - 1; i++)
+        foreach (var categoryGroup in nodesByCategory)
         {
-            var current = nodes[i];
-            var next = nodes[i + 1];
+            var category = categoryGroup.Key;
+            var nodes = categoryGroup.ToList();
 
-            if (next.Chainage <= current.Chainage)
+            for (int i = 0; i < nodes.Count - 1; i++)
             {
-                errors.Add(
-                    $"SubZone {subZone.SubZoneId} sequencing error at node: {next.DeviceId} " +
-                    $"({next.Chainage} km) must be greater than previous node {current.DeviceId} " +
-                    $"({current.Chainage} km)."
-                );
+                var current = nodes[i];
+                var next = nodes[i + 1];
+
+                if (next.Chainage <= current.Chainage)
+                {
+                    errors.Add(
+                        $"SubZone {subZone.SubZoneId} sequencing error at node: {next.DeviceId} of category {next.Category} " +
+                        $"({next.Chainage} km) must be greater than previous node {current.DeviceId} of category {current.Category}" +
+                        $"({current.Chainage} km)."
+                    );
+                }
             }
         }
     }

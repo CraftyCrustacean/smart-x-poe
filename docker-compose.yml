@@ -73,6 +73,8 @@ services:
         condition: service_healthy
     ports:
       - "8080:8080"
+    volumes:
+      - file_uploads:/app/uploads
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 2s
@@ -80,4 +82,5 @@ services:
       retries: 10
 
 volumes:
-  timescaledb_data:  
+  timescaledb_data:
+  file_uploads:

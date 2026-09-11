@@ -3,8 +3,8 @@ using backend.Models.Topology;
 
 namespace backend.Services;
 
-    public class TopologyBuilder
-    {
+public class TopologyBuilder
+{
     public static List<Region> BuildTree(IEnumerable<ProvisionData> flatDevices)
     {
         ArgumentNullException.ThrowIfNull(flatDevices);
@@ -34,21 +34,5 @@ namespace backend.Services;
             })
             .ToList();
     }
+
 }
-
-private void ValidateNode(IHierarchyNode node, List<string> errors)
-    {
-        if (node is Zone zone)
-        {
-            ValidateZoneRules(zone, errors);
-        }
-        else if (node is SubZone subZone)
-        {
-            ValidateSubZoneRules(subZone, errors);
-        }
-
-        foreach (var child in node.GetChildren())
-        {
-            ValidateNode(child, errors);
-        }
-    }
