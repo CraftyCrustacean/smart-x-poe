@@ -8,6 +8,7 @@ builder.Services.AddHostedService<MqttWorker>();
 builder.Services.AddSingleton<DeviceRegistry>();
 builder.Services.AddSingleton<TelemetryBatcher>();
 builder.Services.AddSingleton<EnvironmentalHistory>();
+builder.Services.AddSingleton<FlowRateHistory>();
 builder.Services.AddSingleton<TelemetryProcessor>();
 builder.Services.AddSingleton<DeviceStore>();
 builder.Services.AddSingleton<MqttConnectionStatus>();

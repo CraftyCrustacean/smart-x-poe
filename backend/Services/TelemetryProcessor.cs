@@ -11,12 +11,13 @@ public class TelemetryProcessor
     private readonly ILogger<TelemetryProcessor> _logger;
     private readonly TelemetryBatcher _telemetryBatcher;
     private readonly EnvironmentalHistory _environmentalHistory;
+    private readonly FlowRateHistory _flowRateHistory;
     private readonly DeviceRegistry _deviceRegistry;
     private readonly DeviceStore _deviceStore;
 
-    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory, DeviceStore deviceStore) 
+    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory, DeviceStore deviceStore, FlowRateHistory flowRateHistory) 
     {
-
+        _flowRateHistory = flowRateHistory;
         _environmentalHistory = environmentalHistory;
         _deviceRegistry = deviceRegistry;
         _logger = logger;
@@ -111,6 +112,7 @@ public class TelemetryProcessor
                     {
                         List<TelemetryPacket> flowPackets = flowRateReading.ToPackets();
                         _telemetryBatcher.AddPackets(flowPackets);
+                        _flowRateHistory.UpdateLatest(deviceId, flowRateReading);
                     }
                     else
                     {
