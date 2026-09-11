@@ -56,7 +56,7 @@ public class FlowRateAggregate
     public required DateTime TimeStamp { get; set;}
     public required float FlowRateTotal { get; set; }
 
-    public static FlowRateTotal operator +(FlowRateAggregate firstAggregate, FlowRateAggregate secondAggregate)
+    public static FlowRateAggregate operator +(FlowRateAggregate firstAggregate, FlowRateAggregate secondAggregate)
     {
         var t = firstAggregate.TimeStamp;
         var t1 = secondAggregate.TimeStamp;
@@ -65,12 +65,13 @@ public class FlowRateAggregate
         t1 = new DateTime(t1.Year, t1.Month, t1.Day, t1.Hour, 0, 0, t1.Kind);
 
         if (t != t1) { throw new ArgumentException($"Cannot aggregate flow rates across different batches."); }
-        return new FlowRateTotal
+        return new FlowRateAggregate
         {
 
             TimeStamp = t1,
-            FinalTotal = firstAggregate.FlowRateTotal + secondAggregate.FlowRateTotal
+            FlowRateTotal = firstAggregate.FlowRateTotal + secondAggregate.FlowRateTotal
         };
+
     }
 
 }

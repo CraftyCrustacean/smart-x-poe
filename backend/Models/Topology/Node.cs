@@ -2,6 +2,7 @@
 
 public class Node : IHierarchyNode
 {
+    public string Identifier => DeviceId;
     public required string DeviceId { get; set; }
     public required Provision.ProvisionData.DeviceCategory Category { get; set; }
     public required float Chainage { get; set; }

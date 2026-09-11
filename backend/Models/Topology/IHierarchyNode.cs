@@ -2,5 +2,6 @@
 
 public interface IHierarchyNode
 {
+    string Identifier { get; }
     IEnumerable<IHierarchyNode> GetChildren();
 }
