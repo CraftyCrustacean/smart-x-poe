@@ -5,6 +5,19 @@ using backend.Settings;
 
 var builder = WebApplication.CreateBuilder(args);
 
+var myAllowSpecificOrigins = "_myAllowSpecificOrigins";
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: myAllowSpecificOrigins,
+                      policy  =>
+                      {
+                          policy.WithOrigins("http://localhost:5173")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
+                      });
+});
+
 builder.Services.AddHostedService<MqttWorker>();
 builder.Services.AddSingleton<DeviceRegistry>();
 builder.Services.AddSingleton<TelemetryBatcher>();
@@ -32,6 +45,7 @@ builder.Services.AddNpgsqlDataSource(connectionString);
 
 var app = builder.Build();
 
+app.UseCors(myAllowSpecificOrigins);
 app.MapDeviceEndpoints();
 app.MapFileEndpoints();
 app.MapTopologyEndpoints();

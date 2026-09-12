@@ -28,7 +28,7 @@ def provision_all_devices():
 
     # Send static information for each device, simulating technicians provisioning the devices.
     for i, device in enumerate(devices, start=1):
-        subzone_index = int(device.chainage_km // subzone_length_km)
+        subzone_index = int(device.chainage_km // subzone_length_km) + 1
 
         payload = {
             "device_id": device.device_id,

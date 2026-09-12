@@ -97,9 +97,18 @@ public class TelemetryBatcher
         }
     }
 
-    public (DateTime timestamp, TelemetryPacket[] packet)[] GetRecentBatches()
+    public List<TelemetryBatch> GetRecentBatches()
     {
-        return [.. _recentPackets];
+        lock (_lock)
+        {
+            return [.. _recentPackets
+                .Where(t => t.packet != null)
+                .Select(t => new TelemetryBatch
+                {
+                    Timestamp = t.timestamp,
+                    Packets = [.. t.packet]
+                })];
+        }
     }
 
 }

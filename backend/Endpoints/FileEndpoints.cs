@@ -82,6 +82,21 @@ public static class FileEndpoints
                 throw;
             }
         }).DisableAntiforgery();
+
+        // GET /api/devices/{deviceId}/files
+        group.MapGet("/{deviceId}/files", async (
+            string deviceId,
+            DeviceStore store,
+            FileStore fileStore) =>
+        {
+            if (!await store.DeviceExists(deviceId))
+            {
+                return Results.NotFound(new { message = $"Device with id {deviceId} does not exist." });
+            }
+
+            var files = await fileStore.GetFilesByDeviceIdAsync(deviceId);
+            return Results.Ok(files);
+        });
     }
 
 }

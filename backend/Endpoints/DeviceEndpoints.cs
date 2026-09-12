@@ -46,7 +46,7 @@ public static class DeviceEndpoints
                 });
             }
 
-            int subzoneIndex = (int)(request.Location.Chainage / 50.0f);
+            int subzoneIndex = (int)(request.Location.Chainage / 50.0f) + 1;
             string subzone = $"Subzone-{subzoneIndex}";
 
             var now = DateTime.UtcNow;

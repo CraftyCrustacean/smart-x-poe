@@ -31,5 +31,36 @@ public class FileStore
         await command.ExecuteNonQueryAsync();
     }
 
+    public async Task<List<DeviceFileSummary>> GetFilesByDeviceIdAsync(string deviceId)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(deviceId);
+
+        const string sql = @"
+        SELECT file_id, original_filename, content_type, uploaded_at
+        FROM device_files
+        WHERE device_id = $1
+        ORDER BY uploaded_at DESC;";
+
+        await using var command = _dataSource.CreateCommand(sql);
+        command.Parameters.AddWithValue(deviceId);
+
+        await using var reader = await command.ExecuteReaderAsync();
+
+        var files = new List<DeviceFileSummary>();
+
+        while (await reader.ReadAsync())
+        {
+            files.Add(new DeviceFileSummary
+            {
+                FileId = reader.GetGuid(0),
+                OriginalFilename = reader.GetString(1),
+                ContentType = reader.GetString(2),
+                UploadedAt = reader.GetDateTime(3)
+            });
+        }
+
+        return files;
+    }
+
 }
 
