@@ -97,6 +97,27 @@ public static class FileEndpoints
             var files = await fileStore.GetFilesByDeviceIdAsync(deviceId);
             return Results.Ok(files);
         });
+
+        // GET /api/devices/{deviceId}/files/{fileId}
+        group.MapGet("/{deviceId}/files/{fileId}", async (
+            string deviceId,
+            Guid fileId,
+            FileStore fileStore) =>
+        {
+            var file = await fileStore.GetFileByIdAsync(fileId);
+
+            if (file == null || file.DeviceId != deviceId)
+            {
+                return Results.NotFound(new { message = "File not found for this device." });
+            }
+
+            if (!File.Exists(file.StoredPath))
+            {
+                return Results.NotFound(new { message = "File should exist but is missing on disk." });
+            }
+
+            return Results.File(file.StoredPath, file.ContentType, file.OriginalFilename);
+        });
     }
 
 }

@@ -62,5 +62,32 @@ public class FileStore
         return files;
     }
 
-}
+    public async Task<DeviceFile?> GetFileByIdAsync(Guid fileId)
+    {
+        const string sql = @"
+        SELECT file_id, device_id, original_filename, stored_path, content_type, uploaded_at
+        FROM device_files
+        WHERE file_id = $1;";
 
+        await using var command = _dataSource.CreateCommand(sql);
+        command.Parameters.AddWithValue(fileId);
+
+        await using var reader = await command.ExecuteReaderAsync();
+
+        if (await reader.ReadAsync())
+        {
+            return new DeviceFile
+            {
+                FileId = reader.GetGuid(0),
+                DeviceId = reader.GetString(1),
+                OriginalFilename = reader.GetString(2),
+                StoredPath = reader.GetString(3),
+                ContentType = reader.GetString(4),
+                UploadedAt = reader.GetDateTime(5)
+            };
+        }
+
+        return null;
+    }
+
+}
