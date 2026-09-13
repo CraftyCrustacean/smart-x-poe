@@ -1,12 +1,16 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
+import { useMemo, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
+import { Funnel } from "lucide-react";
 
 function DeviceList() {
   const [searchParams, setSearchParams] = useSearchParams();
   const selectedZone = searchParams.get("zone");
   const selectedSubzone = searchParams.get("subzone");
+  const filterPanelRef = useRef(null);
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterButtonRef = useRef(null);
 
   const zone_labels = {
     richards_bay_durban: "Richards Bay - Durban",
@@ -48,20 +52,58 @@ function DeviceList() {
     return new Set(deviceIds);
   }, [recentBatches]);
 
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [chainageMin, setChainageMin] = useState("");
+  const [chainageMax, setChainageMax] = useState("");
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const clickedButton = filterButtonRef.current?.contains(event.target);
+      const clickedPanel = filterPanelRef.current?.contains(event.target);
+
+      if (!clickedButton && !clickedPanel) {
+        if (filtersOpen) {
+          event.preventDefault();
+        }
+        setFiltersOpen(false);
+      }
+
+      if (!clickedButton && !clickedPanel) {
+        setFiltersOpen(false);
+      }
+    };
+
+    if (filtersOpen) {
+      document.addEventListener("click", handleClickOutside, true);
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutside, true);
+    };
+  }, [filtersOpen]);
+
+  if (isLoading) return <p>Loading...</p>;
+  if (error) return <p>Something went wrong: {error.message}</p>;
+
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Something went wrong: {error.message}</p>;
 
   const zones = [...new Set(data.map((d) => d.topology?.zone).filter(Boolean))];
 
   const zoneCounts = zones.map((zone) => {
-    const subzonesInZone = new Set(
-      data
-        .filter((d) => d.topology?.zone === zone)
-        .map((d) => d.topology?.subzone)
-        .filter(Boolean),
-    );
+    const devicesInZone = data.filter((d) => d.topology?.zone === zone);
+    const subzoneGroups = [
+      ...new Set(devicesInZone.map((d) => d.topology?.subzone).filter(Boolean)),
+    ];
 
-    return { zone, subzoneCount: subzonesInZone.size };
+    const subzonesWithIssues = subzoneGroups.filter((subzone) =>
+      devicesInZone
+        .filter((d) => d.topology?.subzone === subzone)
+        .some((d) => !onlineDeviceIds.has(d.device_id)),
+    ).length;
+
+    return { zone, subzoneCount: subzoneGroups.length, subzonesWithIssues };
   });
 
   const zoneDevices = data.filter((d) => d.topology?.zone === selectedZone);
@@ -70,20 +112,19 @@ function DeviceList() {
   ];
 
   const subzoneCounts = subzones.map((subzone) => {
-    const devicesInSubzone = new Set(
-      zoneDevices
-        .filter((d) => d.topology?.subzone === subzone)
-        .map((d) => d.device_id)
-        .filter(Boolean),
+    const devicesInSubzone = zoneDevices.filter(
+      (d) => d.topology?.subzone === subzone,
     );
-
-    return { subzone, deviceCount: devicesInSubzone.size };
+    const disconnectedCount = devicesInSubzone.filter(
+      (d) => !onlineDeviceIds.has(d.device_id),
+    ).length;
+    return { subzone, deviceCount: devicesInSubzone.length, disconnectedCount };
   });
 
   const registerButton = (
     <Link
       to="/devices/new"
-      className="px-3 py-1.5 rounded-md bg-white border: border-1 border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
+      className="px-3 py-1.5 rounded-md bg-white border border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
     >
       Register Device
     </Link>
@@ -102,7 +143,7 @@ function DeviceList() {
         </div>
 
         <div className="border border-slate-200 rounded-lg divide-y divide-slate-200">
-          {zoneCounts.map(({ zone, subzoneCount }) => (
+          {zoneCounts.map(({ zone, subzoneCount, subzonesWithIssues }) => (
             <button
               key={zone}
               onClick={() => setSearchParams({ zone })}
@@ -112,6 +153,12 @@ function DeviceList() {
                 {zone_labels[zone] || zone}
               </span>
               <span className="text-sm text-slate-500">
+                {subzonesWithIssues > 0 && (
+                  <span className="ml-2 text-red-600 font-medium">
+                    {subzonesWithIssues} issues
+                  </span>
+                )}
+                {" • "}
                 {subzoneCount} Subzones
               </span>
             </button>
@@ -138,7 +185,7 @@ function DeviceList() {
         </div>
 
         <div className="border border-slate-200 rounded-lg divide-y divide-slate-200">
-          {subzoneCounts.map(({ subzone, deviceCount }) => (
+          {subzoneCounts.map(({ subzone, deviceCount, disconnectedCount }) => (
             <button
               key={subzone}
               onClick={() => setSearchParams({ zone: selectedZone, subzone })}
@@ -146,6 +193,12 @@ function DeviceList() {
             >
               <span className="font-medium text-slate-900">{subzone}</span>
               <span className="text-sm text-slate-500">
+                {disconnectedCount > 0 && (
+                  <span className="ml-2 text-red-600 font-medium">
+                    {disconnectedCount} Error
+                  </span>
+                )}
+                {" • "}
                 {deviceCount} Devices
               </span>
             </button>
@@ -160,6 +213,25 @@ function DeviceList() {
         d.topology?.subzone === selectedSubzone,
     );
 
+    const finalDevices = filteredDevices.filter((device) => {
+      const matchesCategory =
+        categoryFilter === "all" || device.category === categoryFilter;
+
+      const isOnline = onlineDeviceIds.has(device.device_id);
+      const matchesStatus =
+        statusFilter === "all" ||
+        (statusFilter === "online" && isOnline) ||
+        (statusFilter === "offline" && !isOnline);
+
+      const chainage = device.location?.chainage_km;
+      const matchesMin =
+        chainageMin === "" || chainage >= parseFloat(chainageMin);
+      const matchesMax =
+        chainageMax === "" || chainage <= parseFloat(chainageMax);
+
+      return matchesCategory && matchesStatus && matchesMin && matchesMax;
+    });
+
     content = (
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -167,11 +239,83 @@ function DeviceList() {
             Devices in {zone_labels[selectedZone] || selectedZone} &gt;{" "}
             {selectedSubzone}
           </h2>
-          <div className="flex gap-2">
+          <div className="flex items-start gap-2">
+            <div className="relative">
+              <button
+                ref={filterButtonRef}
+                onClick={() => setFiltersOpen((prev) => !prev)}
+                className="p-2 rounded-md border border-transparent bg-white text-slate-900 hover: hover:text-orange-600 transition-colors"
+                aria-label="Filters"
+              >
+                <Funnel size={18} strokeWidth={1} />
+              </button>
+              {filtersOpen && (
+                <div
+                  ref={filterPanelRef}
+                  className="absolute z-10 mt-2 bg-white border border-slate-300 rounded-lg shadow-lg p-4 flex flex-col gap-3 w-72"
+                >
+                  <label className="text-xs font-medium text-slate-500">
+                    Category
+                  </label>
+                  <select
+                    value={categoryFilter}
+                    onChange={(e) => setCategoryFilter(e.target.value)}
+                    className="px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                  >
+                    <option value="all">All Categories</option>
+                    <option value="Environmental">Environmental</option>
+                    <option value="Actuator">Actuator</option>
+                    <option value="FlowRate">FlowRate</option>
+                  </select>
+                  <label className="text-xs font-medium text-slate-500">
+                    Status
+                  </label>
+                  <select
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                    className="px-3 py-1.5 border border-slate-300 rounded-md text-sm"
+                  >
+                    <option value="all">All Statuses</option>
+                    <option value="online">Online</option>
+                    <option value="offline">Offline</option>
+                  </select>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-medium text-slate-500">
+                      Chainage Range (km)
+                    </label>
+                    <input
+                      type="number"
+                      placeholder="Min"
+                      value={chainageMin}
+                      onChange={(e) => setChainageMin(e.target.value)}
+                      className="px-3 py-1.5 border border-slate-300 rounded-md text-sm w-full"
+                    />
+                    <input
+                      type="number"
+                      placeholder="Max"
+                      value={chainageMax}
+                      onChange={(e) => setChainageMax(e.target.value)}
+                      className="px-3 py-1.5 border border-slate-300 rounded-md text-sm w-full"
+                    />
+                    <button
+                      onClick={() => {
+                        setCategoryFilter("all");
+                        setStatusFilter("all");
+                        setChainageMin("");
+                        setChainageMax("");
+                      }}
+                      className="px-3 py-1.5 rounded-md bg-white border: border-1 border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
+                    >
+                      Reset Filters
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
             {registerButton}
             <button
               onClick={() => setSearchParams({ zone: selectedZone })}
-              className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
+              className="px-3 py-1.5 rounded-md boreder: border-1 border-transparent bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
             >
               Back
             </button>
@@ -186,7 +330,7 @@ function DeviceList() {
           </div>
 
           <div className="divide-y divide-slate-200">
-            {filteredDevices.map((device) => {
+            {finalDevices.map((device) => {
               const isOnline = onlineDeviceIds.has(device.device_id);
               return (
                 <Link

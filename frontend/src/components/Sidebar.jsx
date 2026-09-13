@@ -1,6 +1,7 @@
 import { Link, NavLink } from "react-router-dom";
 import smartx_logo from "../assets/smartx_logo.svg";
 import { RadioTower } from "lucide-react";
+import { Shrimp } from "lucide-react";
 
 function Sidebar() {
   return (
@@ -25,6 +26,20 @@ function Sidebar() {
         >
           <RadioTower size={18} strokeWidth={1} />
           <span>Device Details</span>
+        </NavLink>
+        <NavLink
+          to="/feature"
+          className={({ isActive }) =>
+            `flex items-center gap-2 px-3 py-2 rounded border border-transparent transition-colors ${
+              isActive
+                ? "bg-orange-300 text-slate-900"
+                : "hover:border-orange-300 hover:bg-orange-100 text-slate-900 "
+            }`
+          }
+        >
+          {/* Timothy the shrimp please these apis please */}
+          <Shrimp size={18} strokeWidth={1} />
+          <span>Feature Demo</span>
         </NavLink>
       </nav>
     </aside>

@@ -4,6 +4,7 @@ import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
+import { Link } from "react-router-dom";
 
 function DeviceDetails() {
   const navigate = useNavigate();
@@ -62,7 +63,20 @@ function DeviceDetails() {
 
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Something went wrong: {error.message}</p>;
-  if (!device) return <p>Device not found.</p>;
+
+  if (!device) {
+    return (
+      <div>
+        <p className="text-slate-600 mb-4">Device not found, check the ID and try again or use the button below to return to device selection.</p>
+        <Link
+          to="/devices"
+          className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
+        >
+          Back to Device List
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -231,7 +245,7 @@ function DeviceDetails() {
         <div className="flex justify-end mt-6 pt-6">
           <button
             onClick={() => navigate(-1)}
-            className="px-3 py-1.5 rounded-md bg-orange-400 text-sm text-slate-900 hover:bg-orange-500 transition-colors"
+            className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
           >
             Back
           </button>

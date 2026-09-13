@@ -50,7 +50,8 @@ public class DeviceStore
         const string sql = @"
         SELECT device_id, mac_address, category, product_type, firmware_version, 
                provisioned_at, status, lat, lon, region, zone, subzone, chainage_km
-        FROM devices;";
+        FROM devices
+        ORDER BY zone, chainage_km;";
 
         await using var command = _dataSource.CreateCommand(sql);
         await using var reader = await command.ExecuteReaderAsync();
