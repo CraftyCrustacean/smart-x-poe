@@ -1,0 +1,7 @@
+schema: "classroom50/repo-config/v1"
+classroom: "prog7312"
+assignment: "prog7312-part-1-github-assignment-link"
+owner:
+  username: "CraftyCrustacean"
+  id: 161468401
+  accepted_at: "2026-09-13T15:12:21Z"
