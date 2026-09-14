@@ -341,7 +341,7 @@ function DeviceList() {
                   <span
                     className="h-2.5 w-2.5 rounded-full inline-block"
                     style={{
-                      backgroundColor: isOnline ? "#22c55e" : "#e44040",
+                      backgroundColor: isOnline ? "#22c55e" : "#c4b9b9",
                     }}
                     title={isOnline ? "Active in latest telemetry" : "Offline"}
                   />
