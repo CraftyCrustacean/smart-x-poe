@@ -1,26 +1,55 @@
 ﻿using System.Collections.Concurrent;
 using System.Diagnostics.CodeAnalysis;
-using static backend.Models.Provision.ProvisionData;
+using backend.Models.Provision;
+using backend.Models.State;
 
 namespace backend.Services;
 
+public enum TelemetryUpdateResult
+{
+    Applied,
+    Stale,
+    UnknownDevice
+}
+
 public class DeviceRegistry
 {
+    private readonly ConcurrentDictionary<string, DeviceState> _devices = new();
 
-    private ConcurrentDictionary<string, DeviceCategory> _deviceCategory = new();
+    public int Count => _devices.Count;
 
-    public bool RegisterDevice(string id, DeviceCategory category)
+    public bool Register(ProvisionData data)
     {
-
-        return _deviceCategory.TryAdd(id, category);
-
+        return _devices.TryAdd(data.DeviceId, DeviceState.FromProvision(data));
     }
 
-    public bool GetDeviceCategory(string id, [NotNullWhen(true)] out DeviceCategory category)
+    public bool TryGet(string deviceId, [NotNullWhen(true)] out DeviceState? state)
     {
-
-        return _deviceCategory.TryGetValue(id, out category);
-
+        return _devices.TryGetValue(deviceId, out state);
     }
 
+    // Create a copy of the current device states, safe to enumerate without locking the registry.
+    public IReadOnlyCollection<DeviceState> Snapshot()
+    {
+        return _devices.Values.ToArray();
+    }
+
+    public TelemetryUpdateResult RecordTelemetry(string deviceId, DateTime receivedAtUtc, int batteryPct)
+    {
+        while (true)
+        {
+            if (!_devices.TryGetValue(deviceId, out var current))
+                return TelemetryUpdateResult.UnknownDevice;
+
+            // If the telemetry is older than the last seen timestamp, ignore it. Prevents stale packets.
+            if (current.LastSeenUtc is { } lastSeen && receivedAtUtc <= lastSeen)
+                return TelemetryUpdateResult.Stale;
+
+            var updated = current with { LastSeenUtc = receivedAtUtc, BatteryPct = batteryPct };
+
+            if (_devices.TryUpdate(deviceId, updated, current))
+                return TelemetryUpdateResult.Applied;
+
+        }
+    }
 }

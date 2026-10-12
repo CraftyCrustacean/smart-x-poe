@@ -45,6 +45,16 @@ builder.Services.AddNpgsqlDataSource(connectionString);
 
 var app = builder.Build();
 
+var registry = app.Services.GetRequiredService<DeviceRegistry>();
+var deviceStore = app.Services.GetRequiredService<DeviceStore>();
+
+var loaded = 0;
+foreach (var device in await deviceStore.GetAllDevices())
+{
+    if (registry.Register(device)) loaded++;
+}
+app.Logger.LogInformation("Device registry loaded {Count} devices from Postgres.", loaded);
+
 app.UseCors(myAllowSpecificOrigins);
 app.MapDeviceEndpoints();
 app.MapFileEndpoints();

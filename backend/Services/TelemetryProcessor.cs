@@ -31,11 +31,10 @@ public class TelemetryProcessor
         try
         {
             ProvisionData? provisionData = JsonSerializer.Deserialize<ProvisionData>(message);
-
             if (provisionData != null)
             {
-                _deviceRegistry.RegisterDevice(provisionData.DeviceId, provisionData.Category);
                 await _deviceStore.UpsertDevice(provisionData);
+                _deviceRegistry.Register(provisionData);
             }
             else
             {
@@ -57,16 +56,18 @@ public class TelemetryProcessor
         var rootElement = jsonDocument.RootElement;
         var deviceIdJsonElement = rootElement.GetProperty("device_id");
         var deviceId = deviceIdJsonElement.GetString();
-        DeviceCategory category;
 
         if (deviceId != null)
         {
-            if (!_deviceRegistry.GetDeviceCategory(deviceId, out category))
+            if (!_deviceRegistry.TryGet(deviceId, out var state))
             {
-                _logger.LogWarning($"Failed to find category for device with id: {deviceId}. Unknown Category.");
+                _logger.LogWarning($"Unknown device {deviceId} - telemetry dropped.");
             }
             else
             {
+                var receivedAtUtc = DateTime.UtcNow;
+                var category = state.Category;
+
                 if (category == DeviceCategory.Environmental)
                 {
                     // Warning repition could use some clean up if time allows.
@@ -75,7 +76,7 @@ public class TelemetryProcessor
                     {
                         EnvironmentalReading? previousReading;
 
-                        if (_environmentalHistory.TryGetPrevious(deviceId, out previousReading))
+                        if (_environmentalHistory.TryGetPrevious(deviceId, out previousReading) && previousReading != null)
                         {
 
                             var deltaResult = previousReading - environmentalReading;
@@ -83,6 +84,7 @@ public class TelemetryProcessor
                             //_logger.LogInformation($"Operator overloading performed, sample output - DeviceId: {deltaResult.DeviceId} ele change: {deltaResult.RateOfElevationChange}");
                         }
 
+                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, environmentalReading.BatteryLevel);
                         _environmentalHistory.UpdateLatest(deviceId, environmentalReading);
                         List<TelemetryPacket> envPackets = environmentalReading.ToPackets();
                         _telemetryBatcher.AddPackets(envPackets);
@@ -97,6 +99,7 @@ public class TelemetryProcessor
                     ActuatorReading? actuatorReading = JsonSerializer.Deserialize<ActuatorReading>(message);
                     if (actuatorReading != null)
                     {
+                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, actuatorReading.BatteryLevel);
                         List<TelemetryPacket> actPackets = actuatorReading.ToPackets();
                         _telemetryBatcher.AddPackets(actPackets);
                     }
@@ -110,6 +113,7 @@ public class TelemetryProcessor
                     FlowRateReading? flowRateReading = JsonSerializer.Deserialize<FlowRateReading>(message);
                     if (flowRateReading != null)
                     {
+                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, flowRateReading.BatteryLevel);
                         List<TelemetryPacket> flowPackets = flowRateReading.ToPackets();
                         _telemetryBatcher.AddPackets(flowPackets);
                         _flowRateHistory.UpdateLatest(deviceId, flowRateReading);

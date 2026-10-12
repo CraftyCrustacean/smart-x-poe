@@ -167,76 +167,80 @@ function Sidebar() {
       <aside
         className={`${
           collapsed ? "w-16" : "w-64"
-        } shrink-0 h-screen bg-white text-slate-900 flex flex-col border-r border-slate-300 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none`}
+        } shrink-0 h-screen bg-white text-slate-900 border-r border-slate-300 overflow-hidden transition-[width] duration-200 ease-out motion-reduce:transition-none`}
       >
-        <Link
-          to="/"
-          aria-label={collapsed ? "Smart-X home" : undefined}
-          className={`h-20 shrink-0 flex items-center gap-2 border-b border-slate-300 ${
-            collapsed ? "justify-center px-2" : "px-4"
-          }`}
-        >
-          <img
-            src={smartx_logo}
-            alt={collapsed ? "" : "Smart-X logo"}
-            className={`${collapsed ? "h-8" : "h-10"} w-auto shrink-0`}
-          />
-          {!collapsed && <span className="text-3xl font-bold">Smart-X</span>}
-        </Link>
-        <nav className="flex-1 overflow-y-auto flex flex-col gap-5 p-3">
-          <ModuleSection
-            id="telemetry"
-            title="Sensor Data Ingestion and Telemetry"
-            paths={["/devices", "/feature"]}
+        <div className={`${collapsed ? "w-16" : "w-64"} h-full flex flex-col`}>
+          <Link
+            to="/"
+            aria-label={collapsed ? "Smart-X home" : undefined}
+            className="h-16 shrink-0 flex items-center gap-2 px-3.5 border-b border-slate-300"
           >
-            <NavItem to="/devices" icon={RadioTower} label="Device Details" />
-            {/* Timothy the shrimp bless these apis please */}
-            <NavItem to="/feature" icon={Shrimp} label="Feature Demo" />
-          </ModuleSection>
-
-          <ModuleSection
-            id="command-stream"
-            title="Real-Time Command Stream and History"
-            paths={["/command-stream"]}
-          >
-            <NavItem to="/command-stream" icon={Gauge} label="Command Stream" />
-
-            <NavItem
-              to="/command-history"
-              icon={RotateCcwClock}
-              label="Command History"
+            <img
+              src={smartx_logo}
+              alt={collapsed ? "" : "Smart-X logo"}
+              className="h-10 w-auto shrink-0"
             />
-          </ModuleSection>
+            {!collapsed && <span className="text-3xl font-bold">Smart-X</span>}
+          </Link>
+          <nav className="flex-1 overflow-y-auto flex flex-col gap-5 p-3">
+            <ModuleSection
+              id="telemetry"
+              title="Sensor Data Ingestion and Telemetry"
+              paths={["/devices", "/feature"]}
+            >
+              <NavItem to="/devices" icon={RadioTower} label="Device Details" />
+              {/* Timothy the shrimp bless these apis please */}
+              <NavItem to="/feature" icon={Shrimp} label="Feature Demo" />
+            </ModuleSection>
 
-          <ModuleSection
-            id="topology"
-            title="Network Topology and Mesh Routing"
-            disabled
-          >
-            <DisabledNavItem
-              icon={Network}
-              label="Topology"
-              note="Available in the final PoE"
-            />
-          </ModuleSection>
-        </nav>
-        <div className="shrink-0 p-3 border-t border-slate-300">
-          <button
-            type="button"
-            onClick={() => setCollapsed((c) => !c)}
-            aria-expanded={!collapsed}
-            aria-label={toggleLabel}
-            title={toggleLabel}
-            className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded border border-transparent text-slate-600 transition-colors hover:border-orange-100"
-          >
-            <ToggleIcon
-              size={18}
-              strokeWidth={1}
-              aria-hidden="true"
-              className="shrink-0"
-            />
-            {!collapsed && <span>Collapse</span>}
-          </button>
+            <ModuleSection
+              id="command-stream"
+              title="Real-Time Command Stream and History"
+              paths={["/command-stream"]}
+            >
+              <NavItem
+                to="/command-stream"
+                icon={Gauge}
+                label="Command Stream"
+              />
+
+              <NavItem
+                to="/command-history"
+                icon={RotateCcwClock}
+                label="Command History"
+              />
+            </ModuleSection>
+
+            <ModuleSection
+              id="topology"
+              title="Network Topology and Mesh Routing"
+              disabled
+            >
+              <DisabledNavItem
+                icon={Network}
+                label="Topology"
+                note="Available in the final PoE"
+              />
+            </ModuleSection>
+          </nav>
+          <div className="shrink-0 p-3 border-t border-slate-300">
+            <button
+              type="button"
+              onClick={() => setCollapsed((c) => !c)}
+              aria-expanded={!collapsed}
+              aria-label={toggleLabel}
+              title={toggleLabel}
+              className="flex w-full items-center gap-2 px-3 py-2 text-sm font-medium whitespace-nowrap rounded border border-transparent text-slate-600 transition-colors hover:border-orange-100"
+            >
+              <ToggleIcon
+                size={18}
+                strokeWidth={1}
+                aria-hidden="true"
+                className="shrink-0"
+              />
+              {!collapsed && <span>Collapse</span>}
+            </button>
+          </div>
         </div>
       </aside>
     </SidebarCollapsedContext.Provider>

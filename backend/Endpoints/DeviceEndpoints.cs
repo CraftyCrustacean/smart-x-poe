@@ -84,15 +84,10 @@ public static class DeviceEndpoints
                 }
             };
 
-            registry.RegisterDevice(
-                provisionData.DeviceId,
-                provisionData.Category);
-
             await store.UpsertDevice(provisionData);
+            registry.Register(provisionData);
 
-            return Results.Created(
-                $"/api/devices/{provisionData.DeviceId}",
-                provisionData);
+            return Results.Created($"/api/devices/{provisionData.DeviceId}", provisionData);
         });
 
         // GET /api/devices
@@ -100,5 +95,11 @@ public static class DeviceEndpoints
         {
             return Results.Ok(await store.GetAllDevices());
         });
+
+        // GET /api/devices/{deviceId}/state
+        group.MapGet("/{deviceId}/state", (string deviceId, DeviceRegistry registry) =>
+            registry.TryGet(deviceId, out var state)
+                ? Results.Ok(state)
+                : Results.NotFound(new { message = $"Device {deviceId} is not registered." }));
     }
 }
