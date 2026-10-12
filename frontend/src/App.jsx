@@ -6,6 +6,7 @@ import Landing from "./pages/Landing";
 import Layout from "./components/Layout";
 import FeatureDemo from "./pages/FeatureDemo";
 import CommandStream from "./pages/CommandStream";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -19,6 +20,7 @@ function App() {
             <Route path="/devices/new" element={<DeviceRegistration />} />
             <Route path="/feature" element={<FeatureDemo />} />
             <Route path="/command-stream" element={<CommandStream />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Layout>
       </BrowserRouter>

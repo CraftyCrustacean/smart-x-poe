@@ -1,8 +1,9 @@
 import { Link, NavLink } from "react-router-dom";
 import smartx_logo from "../assets/smartx_logo.svg";
 import { useEffect, useId, useState } from "react";
+import { useLocation } from "react-router-dom";
 import {
-  Activity,
+  RotateCcwClock,
   ChevronDown,
   Gauge,
   Network,
@@ -11,13 +12,20 @@ import {
 } from "lucide-react";
 
 function ModuleSection({
+  id,
   title,
+  paths = [],
   children,
   disabled = false,
   defaultOpen = false,
 }) {
-  const storageKey = `sidebar-open:${title}`;
+  const storageKey = `sidebar-open:${id}`;
+  const { pathname } = useLocation();
+  const containsActive = paths.some(
+    (p) => pathname === p || pathname.startsWith(p + "/"),
+  );
   const [open, setOpen] = useState(() => {
+    if (containsActive) return true;
     try {
       const stored = localStorage.getItem(storageKey);
       return stored === null ? defaultOpen : stored === "true";
@@ -25,6 +33,13 @@ function ModuleSection({
       return defaultOpen;
     }
   });
+
+  const [prevContainsActive, setPrevContainsActive] = useState(containsActive);
+  if (containsActive !== prevContainsActive) {
+    setPrevContainsActive(containsActive);
+    if (containsActive) setOpen(true);
+  }
+
   const contentId = useId();
 
   useEffect(() => {
@@ -104,23 +119,33 @@ function Sidebar() {
         <span className="text-3xl font-bold">Smart-X</span>
       </Link>
       <nav className="flex flex-col gap-5 p-3">
-        <ModuleSection title="Sensor Data Ingestion and Telemetry">
+        <ModuleSection
+          id="telemetry"
+          title="Sensor Data Ingestion and Telemetry"
+          paths={["/devices", "/feature"]}
+        >
           <NavItem to="/devices" icon={RadioTower} label="Device Details" />
           {/* Timothy the shrimp bless these apis please */}
           <NavItem to="/feature" icon={Shrimp} label="Feature Demo" />
         </ModuleSection>
 
-        <ModuleSection title="Real Time Command Stream">
-          <NavItem to="/telemetry" icon={Gauge} label="Telemetry Dashboard" />
+        <ModuleSection
+          id="command-stream"
+          title="Real-Time Command Stream and History"
+          paths={["/command-stream"]}
+        >
+          <NavItem to="/command-stream" icon={Gauge} label="Command Stream" />
+
           <NavItem
-            to="/command-stream"
-            icon={Activity}
-            label="Command Stream"
+            to="/command-history"
+            icon={RotateCcwClock}
+            label="Command History"
           />
         </ModuleSection>
 
         <ModuleSection
-          title="Network Topology and Mesh Routing (Coming Soon)"
+          id="topology"
+          title="Network Topology and Mesh Routing"
           disabled
         >
           <DisabledNavItem
