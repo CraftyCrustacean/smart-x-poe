@@ -5,6 +5,7 @@ import DeviceRegistration from "./pages/DeviceRegistration";
 import Landing from "./pages/Landing";
 import Layout from "./components/Layout";
 import FeatureDemo from "./pages/FeatureDemo";
+import CommandStream from "./pages/CommandStream";
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
             <Route path="/devices/:deviceId" element={<DeviceDetails />} />
             <Route path="/devices/new" element={<DeviceRegistration />} />
             <Route path="/feature" element={<FeatureDemo />} />
+            <Route path="/command-stream" element={<CommandStream />} />
           </Routes>
         </Layout>
       </BrowserRouter>
