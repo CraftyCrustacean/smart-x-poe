@@ -62,6 +62,7 @@ app.MapDeviceEndpoints();
 app.MapFileEndpoints();
 app.MapTopologyEndpoints();
 app.MapTelemetryEndpoints();
+app.MapDiagnosticsEndpoints();
 app.MapGet("/health", (MqttConnectionStatus health) =>
     health.IsSubscribed ? Results.Ok("Ready") : Results.StatusCode(503));
 
