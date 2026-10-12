@@ -1,7 +1,6 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation } from "react-router-dom";
 import smartx_logo from "../assets/smartx_logo.svg";
 import { useEffect, useId, useState } from "react";
-import { useLocation } from "react-router-dom";
 import {
   RotateCcwClock,
   ChevronDown,
@@ -104,7 +103,10 @@ function NavItem({ to, icon: Icon, label }) {
 
 function DisabledNavItem({ icon: Icon, label, note }) {
   return (
-    <div className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded border border-transparent text-slate-500 cursor-not-allowed">
+    <div
+      aria-disabled="true"
+      className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded border border-transparent text-slate-500 cursor-not-allowed"
+    >
       <Icon size={18} strokeWidth={1} aria-hidden="true" />
       <span className="flex flex-col">
         <span>{label}</span>
