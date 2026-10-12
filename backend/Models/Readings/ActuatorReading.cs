@@ -3,18 +3,12 @@ using System.Text.Json.Serialization;
 
 namespace backend.Models.Readings;
 
-public class ActuatorReading
+public class ActuatorReading : SensorReading
 {
-    [JsonPropertyName("device_id")]
-    public required string DeviceId { get; set; }
-    [JsonPropertyName("timestamp")]
-    public required DateTime TimeStamp { get; set; }
     [JsonPropertyName("valve_open")]
     public required bool ValveOpen { get; set; }
-    [JsonPropertyName("battery_level_pct")]
-    public required int BatteryLevel { get; set; }
 
-    public List<TelemetryPacket> ToPackets()
+    public override List<TelemetryPacket> ToPackets()
     {
         List<TelemetryPacket> allActuatorPackets = new();
 

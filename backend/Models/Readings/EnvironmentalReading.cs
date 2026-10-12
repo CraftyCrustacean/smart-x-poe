@@ -4,22 +4,17 @@ using System.Text.Json.Serialization;
 
 namespace backend.Models.Readings;
 
-public class EnvironmentalReading
+public class EnvironmentalReading : SensorReading
 {
-    [JsonPropertyName("device_id")]
-    public required string DeviceId { get; set; }
-    [JsonPropertyName("timestamp")]
-    public required DateTime TimeStamp { get; set; }
     [JsonPropertyName("elevation_change_mm")]
     public required float ElevationChange { get; set; }
     [JsonPropertyName("surface_temperature_c")]
     public required float SurfaceTemp { get; set; }
     [JsonPropertyName("colour_shift_index")]
     public required float ColourShift { get; set; }
-    [JsonPropertyName("battery_level_pct")]
-    public required int BatteryLevel { get; set; }
 
-    public List<TelemetryPacket> ToPackets()
+
+    public override List<TelemetryPacket> ToPackets()
     {
         List<TelemetryPacket> allEnvironmentalPackets = new();
 
