@@ -33,6 +33,8 @@ builder.Services.Configure<MqttSettings>(builder.Configuration.GetSection(MqttSe
 builder.Services.Configure<DbSettings>(builder.Configuration.GetSection(DbSettings.DbSettingsName));
 var dbSettings = builder.Configuration.GetSection(DbSettings.DbSettingsName).Get<DbSettings>();
 builder.Services.AddHealthChecks();
+builder.Services.AddSingleton<TelemetryQueue>();
+builder.Services.AddHostedService<TelemetryConsumer>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};" +

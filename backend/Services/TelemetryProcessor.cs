@@ -14,8 +14,9 @@ public class TelemetryProcessor
     private readonly FlowRateHistory _flowRateHistory;
     private readonly DeviceRegistry _deviceRegistry;
     private readonly DeviceStore _deviceStore;
+    private readonly TelemetryQueue _telemetryQueue;
 
-    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory, DeviceStore deviceStore, FlowRateHistory flowRateHistory) 
+    public TelemetryProcessor(ILogger<TelemetryProcessor> logger, DeviceRegistry deviceRegistry, TelemetryBatcher telemetryBatcher, EnvironmentalHistory environmentalHistory, DeviceStore deviceStore, FlowRateHistory flowRateHistory, TelemetryQueue telemetryQueue) 
     {
         _flowRateHistory = flowRateHistory;
         _environmentalHistory = environmentalHistory;
@@ -23,6 +24,7 @@ public class TelemetryProcessor
         _logger = logger;
         _telemetryBatcher = telemetryBatcher;
         _deviceStore = deviceStore;
+        _telemetryQueue = telemetryQueue;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -49,88 +51,79 @@ public class TelemetryProcessor
 
     }
 
-    public void ProcessTelemetry(string message)
+public void Ingest(string message)
+{
+    var receivedAtUtc = DateTime.UtcNow;
+
+    try
     {
+        using var document = JsonDocument.Parse(message);
 
-        using var jsonDocument = JsonDocument.Parse(message);
-        var rootElement = jsonDocument.RootElement;
-        var deviceIdJsonElement = rootElement.GetProperty("device_id");
-        var deviceId = deviceIdJsonElement.GetString();
-
-        if (deviceId != null)
+        if (!document.RootElement.TryGetProperty("device_id", out var idElement) ||
+            idElement.ValueKind != JsonValueKind.String)
         {
-            if (!_deviceRegistry.TryGet(deviceId, out var state))
-            {
-                _logger.LogWarning($"Unknown device {deviceId} - telemetry dropped.");
-            }
-            else
-            {
-                var receivedAtUtc = DateTime.UtcNow;
-                var category = state.Category;
-
-                if (category == DeviceCategory.Environmental)
-                {
-                    // Warning repition could use some clean up if time allows.
-                    EnvironmentalReading? environmentalReading = JsonSerializer.Deserialize<EnvironmentalReading>(message);
-                    if (environmentalReading != null)
-                    {
-                        EnvironmentalReading? previousReading;
-
-                        if (_environmentalHistory.TryGetPrevious(deviceId, out previousReading) && previousReading != null)
-                        {
-
-                            var deltaResult = previousReading - environmentalReading;
-                            // This will flood the terminal
-                            //_logger.LogInformation($"Operator overloading performed, sample output - DeviceId: {deltaResult.DeviceId} ele change: {deltaResult.RateOfElevationChange}");
-                        }
-
-                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, environmentalReading.BatteryLevel);
-                        _environmentalHistory.UpdateLatest(deviceId, environmentalReading);
-                        List<TelemetryPacket> envPackets = environmentalReading.ToPackets();
-                        _telemetryBatcher.AddPackets(envPackets);
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Failed to deserialise {message} from topic: telmetry.");
-                    }
-                }
-                else if (category == DeviceCategory.Actuator)
-                {
-                    ActuatorReading? actuatorReading = JsonSerializer.Deserialize<ActuatorReading>(message);
-                    if (actuatorReading != null)
-                    {
-                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, actuatorReading.BatteryLevel);
-                        List<TelemetryPacket> actPackets = actuatorReading.ToPackets();
-                        _telemetryBatcher.AddPackets(actPackets);
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Failed to deserialise {message} from topic: telmetry.");
-                    }
-                }
-                else if (category == DeviceCategory.FlowRate)
-                {
-                    FlowRateReading? flowRateReading = JsonSerializer.Deserialize<FlowRateReading>(message);
-                    if (flowRateReading != null)
-                    {
-                        _deviceRegistry.RecordTelemetry(deviceId, receivedAtUtc, flowRateReading.BatteryLevel);
-                        List<TelemetryPacket> flowPackets = flowRateReading.ToPackets();
-                        _telemetryBatcher.AddPackets(flowPackets);
-                        _flowRateHistory.UpdateLatest(deviceId, flowRateReading);
-                    }
-                    else
-                    {
-                        _logger.LogWarning($"Failed to deserialise {message} from topic: telmetry.");
-                    }
-                }
-            }
-        }
-        else
-        {
-            _logger.LogWarning($"Failed to find device id, possibly malformed message");
+            _logger.LogWarning("Telemetry without a device_id string dropped.");
+            return;
         }
 
+        var deviceId = idElement.GetString()!;
+
+        if (!_deviceRegistry.TryGet(deviceId, out var state))
+        {
+            _logger.LogWarning("Unknown device {DeviceId}; telemetry dropped.", deviceId);
+            return;
+        }
+
+        SensorReading? reading = state.Category switch
+        {
+            DeviceCategory.Environmental => JsonSerializer.Deserialize<EnvironmentalReading>(document),
+            DeviceCategory.Actuator => JsonSerializer.Deserialize<ActuatorReading>(document),
+            DeviceCategory.FlowRate => JsonSerializer.Deserialize<FlowRateReading>(document),
+            _ => null
+        };
+
+        if (reading is null)
+        {
+            _logger.LogWarning("Telemetry for {DeviceId} could not be read as {Category}.", deviceId, state.Category);
+            return;
+        }
+
+        _telemetryQueue.Enqueue(reading, receivedAtUtc);
+    }
+    catch (JsonException ex)
+    {
+        _logger.LogWarning(ex, "Malformed telemetry message dropped.");
+    }
+}
+
+    public void Process(QueuedTelemetry item)
+    {
+        var reading = item.Reading;
+        var result = _deviceRegistry.RecordTelemetry(reading.DeviceId, item.ReceivedAtUtc, reading.BatteryLevel);
+
+        if (result == TelemetryUpdateResult.UnknownDevice)
+        {
+            return;
+        }
+
+        var isLatest = result == TelemetryUpdateResult.Applied;
+
+        switch (reading)
+        {
+            case EnvironmentalReading environmental when isLatest:
+                if (_environmentalHistory.TryGetPrevious(environmental.DeviceId, out var previous) && previous != null)
+                {
+                    _ = previous - environmental;
+                }
+                _environmentalHistory.UpdateLatest(environmental.DeviceId, environmental);
+                break;
+
+            case FlowRateReading flowRate when isLatest:
+                _flowRateHistory.UpdateLatest(flowRate.DeviceId, flowRate);
+                break;
+        }
+
+        _telemetryBatcher.AddPackets(reading.ToPackets());
     }
 
 }
-

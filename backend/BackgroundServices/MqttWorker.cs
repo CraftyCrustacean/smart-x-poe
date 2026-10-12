@@ -62,9 +62,9 @@ public class MqttWorker : BackgroundService
             }
             else if (topic == "sensors/telemetry")
             {
-                
-                _telemetryProcessor.ProcessTelemetry(message);
 
+                _telemetryProcessor.Ingest(message);
+                
             }
 
             // This will flood your terminal.
