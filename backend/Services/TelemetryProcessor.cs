@@ -1,6 +1,7 @@
 ﻿using System.Text.Json;
 using backend.Models.Provision;
 using backend.Models.Readings;
+using backend.Models.State;
 using backend.Models.Telemetry;
 using static backend.Models.Provision.ProvisionData;
 
@@ -19,6 +20,7 @@ public class TelemetryProcessor
     private readonly ReadingHistory<ActuatorReading> _actuatorTimeline;
     private readonly ReadingHistory<FlowRateReading> _flowRateTimeline;
     private readonly ThresholdEvaluator _thresholdEvaluator;
+    private readonly ActiveAlerts _activeAlerts;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -31,7 +33,8 @@ public class TelemetryProcessor
         ReadingHistory<EnvironmentalReading> environmentalTimeline,
         ReadingHistory<ActuatorReading> actuatorTimeline,
         ReadingHistory<FlowRateReading> flowRateTimeline,
-        ThresholdEvaluator thresholdEvaluator
+        ThresholdEvaluator thresholdEvaluator,
+        ActiveAlerts activeAlerts
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -45,6 +48,7 @@ public class TelemetryProcessor
         _actuatorTimeline = actuatorTimeline;
         _flowRateTimeline = flowRateTimeline;
         _thresholdEvaluator = thresholdEvaluator;
+        _activeAlerts = activeAlerts;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -148,6 +152,36 @@ public class TelemetryProcessor
             case FlowRateReading flowRate:
                 _flowRateTimeline.Add(flowRate);
                 break;
+        }
+
+        if (isLatest)
+        {
+            foreach (var check in item.Checks)
+            {
+                var key = new AlertKey(reading.DeviceId, check.Metric);
+
+                if (check.IsBreach)
+                {
+                    if (_activeAlerts.TryAdd(key))
+                    {
+                        _logger.LogWarning(
+                            "Critical alert raised: {DeviceId} {Metric} = {Value} (severity {Severity:F2}).",
+                            reading.DeviceId,
+                            check.Metric,
+                            check.Value,
+                            check.Severity
+                        );
+                    }
+                }
+                else if (_activeAlerts.Remove(key))
+                {
+                    _logger.LogInformation(
+                        "Alert cleared: {DeviceId} {Metric}.",
+                        reading.DeviceId,
+                        check.Metric
+                    );
+                }
+            }
         }
 
         switch (reading)
