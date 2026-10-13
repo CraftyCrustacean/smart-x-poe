@@ -33,7 +33,9 @@ builder.Services.Configure<MqttSettings>(
     builder.Configuration.GetSection(MqttSettings.MqttSettingsName)
 );
 builder.Services.Configure<DbSettings>(builder.Configuration.GetSection(DbSettings.DbSettingsName));
-var dbSettings = builder.Configuration.GetSection(DbSettings.DbSettingsName).Get<DbSettings>();
+var dbSettings =
+    builder.Configuration.GetSection(DbSettings.DbSettingsName).Get<DbSettings>()
+    ?? throw new InvalidOperationException("Database settings are not configured.");
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<TelemetryQueue>();
 builder.Services.AddHostedService<TelemetryConsumer>();

@@ -1,5 +1,11 @@
-﻿namespace backend.Models.Telemetry;
+﻿using System.Text.Json.Serialization;
 
+namespace backend.Models.Telemetry;
+
+[JsonPolymorphic(TypeDiscriminatorPropertyName = "valueType")]
+[JsonDerivedType(typeof(TelemetryPacket<float>), "float")]
+[JsonDerivedType(typeof(TelemetryPacket<int>), "int")]
+[JsonDerivedType(typeof(TelemetryPacket<bool>), "bool")]
 public class TelemetryPacket
 {
     public required string DeviceId { get; set; }

@@ -129,7 +129,6 @@ public static class DeviceEndpoints
                         new { message = $"Device {deviceId} is not registered." }
                     );
 
-                // O(1) registry lookup tells us which typed store to read.
                 return state.Category switch
                 {
                     DeviceCategory.Environmental => Results.Ok(environmental.GetTimeline(deviceId)),
