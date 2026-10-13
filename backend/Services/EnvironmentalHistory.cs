@@ -1,18 +1,29 @@
-﻿using backend.Models.Readings;
+﻿using System.Diagnostics.CodeAnalysis;
+using backend.Models.Readings;
 
 namespace backend.Services;
 
 public class EnvironmentalHistory
 {
-    private Dictionary<string, EnvironmentalReading> _previousEnvironmentalReading = new();
+    private readonly Dictionary<string, EnvironmentalReading> _previousEnvironmentalReading = new();
+    private readonly Lock _lock = new();
 
-    public bool TryGetPrevious(string deviceId, out EnvironmentalReading? previous)
+    public bool TryGetPrevious(
+        string deviceId,
+        [NotNullWhen(true)] out EnvironmentalReading? previous
+    )
     {
-        return _previousEnvironmentalReading.TryGetValue(deviceId, out previous);
+        lock (_lock)
+        {
+            return _previousEnvironmentalReading.TryGetValue(deviceId, out previous);
+        }
     }
 
     public void UpdateLatest(string deviceId, EnvironmentalReading reading)
     {
-        _previousEnvironmentalReading[deviceId] = reading;
+        lock (_lock)
+        {
+            _previousEnvironmentalReading[deviceId] = reading;
+        }
     }
 }
