@@ -16,7 +16,8 @@ public class DeviceStore
 
     public async Task UpsertDevice(ProvisionData data)
     {
-        const string sql = @"
+        const string sql =
+            @"
             INSERT INTO devices (device_id, mac_address, category, product_type, firmware_version, provisioned_at, status, lat, lon, region, zone, subzone, chainage_km)
             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
             ON CONFLICT (device_id)
@@ -42,12 +43,12 @@ public class DeviceStore
         command.Parameters.AddWithValue(data.LocationData.Chainage);
 
         await command.ExecuteNonQueryAsync();
-
     }
 
     public async Task<List<ProvisionData>> GetAllDevices()
     {
-        const string sql = @"
+        const string sql =
+            @"
         SELECT device_id, mac_address, category, product_type, firmware_version, 
                provisioned_at, status, lat, lon, region, zone, subzone, chainage_km
         FROM devices
@@ -73,14 +74,14 @@ public class DeviceStore
                 {
                     Latitude = reader.GetFloat(7),
                     Longitude = reader.GetFloat(8),
-                    Chainage = reader.GetFloat(12)
+                    Chainage = reader.GetFloat(12),
                 },
                 TopologyData = new TopologyData
                 {
                     Region = reader.GetString(9),
                     Zone = reader.GetString(10),
-                    Subzone = reader.GetString(11)
-                }
+                    Subzone = reader.GetString(11),
+                },
             };
 
             devices.Add(device);
@@ -91,7 +92,8 @@ public class DeviceStore
 
     public async Task<bool> DeviceExists(string deviceId)
     {
-        const string sql = @"
+        const string sql =
+            @"
         SELECT EXISTS (
             SELECT 1 
             FROM devices 

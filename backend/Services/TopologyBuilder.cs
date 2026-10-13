@@ -25,14 +25,18 @@ public class TopologyBuilder
                             {
                                 SubZoneId = subzoneGroup.Key,
                                 Nodes = subzoneGroup
-                                    .Select(d => new Node { DeviceId = d.DeviceId, Category = d.Category, Chainage = d.LocationData.Chainage })
-                                    .ToList()
+                                    .Select(d => new Node
+                                    {
+                                        DeviceId = d.DeviceId,
+                                        Category = d.Category,
+                                        Chainage = d.LocationData.Chainage,
+                                    })
+                                    .ToList(),
                             })
-                            .ToList()
+                            .ToList(),
                     })
-                    .ToList()
+                    .ToList(),
             })
             .ToList();
     }
-
 }

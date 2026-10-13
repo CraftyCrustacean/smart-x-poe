@@ -1,8 +1,8 @@
 using System.Text;
+using backend.Services;
+using backend.Settings;
 using Microsoft.Extensions.Options;
 using MQTTnet;
-using backend.Settings;
-using backend.Services;
 
 namespace backend.BackgroundServices;
 
@@ -16,7 +16,12 @@ public class MqttWorker : BackgroundService
     private readonly TelemetryProcessor _telemetryProcessor;
     private readonly MqttConnectionStatus _mqttConnectionStatus;
 
-    public MqttWorker(ILogger<MqttWorker> logger, IOptions<MqttSettings> mqttSettings, TelemetryProcessor telemetryProcessor, MqttConnectionStatus mqttConnectionStatus)
+    public MqttWorker(
+        ILogger<MqttWorker> logger,
+        IOptions<MqttSettings> mqttSettings,
+        TelemetryProcessor telemetryProcessor,
+        MqttConnectionStatus mqttConnectionStatus
+    )
     {
         _logger = logger;
         _mqttSettings = mqttSettings.Value;
@@ -38,8 +43,14 @@ public class MqttWorker : BackgroundService
             .WithCleanSession(false)
             .Build();
 
-        _mqttSubscribeOptions = mqttFactory.CreateSubscribeOptionsBuilder()
-            .WithTopicFilter(t => t.WithTopic(provisionTopic).WithQualityOfServiceLevel(MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce))
+        _mqttSubscribeOptions = mqttFactory
+            .CreateSubscribeOptionsBuilder()
+            .WithTopicFilter(t =>
+                t.WithTopic(provisionTopic)
+                    .WithQualityOfServiceLevel(
+                        MQTTnet.Protocol.MqttQualityOfServiceLevel.AtLeastOnce
+                    )
+            )
             .WithTopicFilter(t => t.WithTopic(telemetryTopic))
             .Build();
 
@@ -56,20 +67,15 @@ public class MqttWorker : BackgroundService
 
             if (topic == "devices/provision")
             {
-
                 await _telemetryProcessor.ProcessProvisioning(message);
-                
             }
             else if (topic == "sensors/telemetry")
             {
-
                 _telemetryProcessor.Ingest(message);
-                
             }
 
             // This will flood your terminal.
             //_logger.LogInformation("Recieved message for {Topic} with content {Message}.", topic, message);
-
         };
     }
 
@@ -82,7 +88,10 @@ public class MqttWorker : BackgroundService
             {
                 if (!await _mqttClient.TryPingAsync())
                 {
-                    var connectResult = await _mqttClient.ConnectAsync(_mqttClientOptions, stoppingToken);
+                    var connectResult = await _mqttClient.ConnectAsync(
+                        _mqttClientOptions,
+                        stoppingToken
+                    );
 
                     if (connectResult.ResultCode == MqttClientConnectResultCode.Success)
                     {
@@ -92,7 +101,9 @@ public class MqttWorker : BackgroundService
                         if (connectResult.IsSessionPresent)
                         {
                             _mqttConnectionStatus.IsSubscribed = true;
-                            _logger.LogInformation("Session was found, queued messages and subscription were preserved.");
+                            _logger.LogInformation(
+                                "Session was found, queued messages and subscription were preserved."
+                            );
                         }
                         else
                         {
@@ -125,21 +136,20 @@ public class MqttWorker : BackgroundService
                 {
                     _logger.LogInformation("Service cancled by user.");
                 }
-                
             }
-        }  
+        }
     }
 
-    public override async Task StopAsync(CancellationToken stoppingToken) 
+    public override async Task StopAsync(CancellationToken stoppingToken)
     {
         // Disconnect cleanly.
         if (_mqttClient.IsConnected)
         {
-            await _mqttClient.DisconnectAsync(MqttClientDisconnectOptionsReason.NormalDisconnection);
+            await _mqttClient.DisconnectAsync(
+                MqttClientDisconnectOptionsReason.NormalDisconnection
+            );
         }
         await base.StopAsync(stoppingToken);
         _mqttClient.Dispose();
-
     }
-
 }

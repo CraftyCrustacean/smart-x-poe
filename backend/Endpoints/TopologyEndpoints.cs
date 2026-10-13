@@ -9,29 +9,32 @@ public static class TopologyEndpoints
         var group = app.MapGroup("/api/topology");
 
         // GET /api/topology/validate
-        group.MapGet("/validate", async (DeviceStore store) =>
-        {
-            var devices = await store.GetAllDevices();
-            var tree = TopologyBuilder.BuildTree(devices);
-            var validationResult = TreeValidator.Validate(tree);
+        group.MapGet(
+            "/validate",
+            async (DeviceStore store) =>
+            {
+                var devices = await store.GetAllDevices();
+                var tree = TopologyBuilder.BuildTree(devices);
+                var validationResult = TreeValidator.Validate(tree);
 
-            return Results.Ok(validationResult);
-        });
+                return Results.Ok(validationResult);
+            }
+        );
 
         // GET /api/topology/flowrate
-        group.MapGet("/flowrate", async (
-            DeviceStore store,
-            FlowRateAggregator aggregator) =>
-        {
-            var devices = await store.GetAllDevices();
-            var tree = TopologyBuilder.BuildTree(devices);
+        group.MapGet(
+            "/flowrate",
+            async (DeviceStore store, FlowRateAggregator aggregator) =>
+            {
+                var devices = await store.GetAllDevices();
+                var tree = TopologyBuilder.BuildTree(devices);
 
-            var regionalAggregates = tree
-                .Select(region => aggregator.AggregateFlowRate(region))
-                .Where(aggregate => aggregate is not null)
-                .ToList();
+                var regionalAggregates = tree.Select(region => aggregator.AggregateFlowRate(region))
+                    .Where(aggregate => aggregate is not null)
+                    .ToList();
 
-            return Results.Ok(regionalAggregates);
-        });
+                return Results.Ok(regionalAggregates);
+            }
+        );
     }
 }

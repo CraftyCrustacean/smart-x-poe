@@ -13,12 +13,13 @@ public sealed record DeviceState
     public DateTime? LastSeenUtc { get; init; }
     public int? BatteryPct { get; init; }
 
-    public static DeviceState FromProvision(ProvisionData data) => new()
-    {
-        DeviceId = data.DeviceId,
-        Category = data.Category,
-        Zone = data.TopologyData.Zone,
-        Subzone = data.TopologyData.Subzone,
-        ChainageKm = data.LocationData.Chainage,
-    };
+    public static DeviceState FromProvision(ProvisionData data) =>
+        new()
+        {
+            DeviceId = data.DeviceId,
+            Category = data.Category,
+            Zone = data.TopologyData.Zone,
+            Subzone = data.TopologyData.Subzone,
+            ChainageKm = data.LocationData.Chainage,
+        };
 }

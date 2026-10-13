@@ -8,18 +8,19 @@ public class TelemetryBatcher
     private DateTime? _currentAnchor;
     private DateTime? _MostRecentPacketArrivalTime;
     private List<TelemetryPacket> _packetsThisBatch = [];
-    private (DateTime timestamp, TelemetryPacket[] packet)[] _recentPackets = new (DateTime timestamp, TelemetryPacket[] packet)[7];
+    private (DateTime timestamp, TelemetryPacket[] packet)[] _recentPackets = new (
+        DateTime timestamp,
+        TelemetryPacket[] packet
+    )[7];
     private int _writeIndex = 0;
     private readonly Lock _lock = new();
     private readonly Timer _timer;
 
-
     public TelemetryBatcher(ILogger<TelemetryBatcher> logger)
     {
         _logger = logger;
-        _timer = new Timer (CheckPacketInterval, null, 0, 1000);
+        _timer = new Timer(CheckPacketInterval, null, 0, 1000);
     }
-
 
     public void AddPackets(List<TelemetryPacket> packets)
     {
@@ -49,7 +50,9 @@ public class TelemetryBatcher
                 }
                 else
                 {
-                    _logger.LogWarning("Warning: packet outside of acceptable time range. Packet is orphaned and will be dropped.");
+                    _logger.LogWarning(
+                        "Warning: packet outside of acceptable time range. Packet is orphaned and will be dropped."
+                    );
                 }
             }
         }
@@ -57,7 +60,8 @@ public class TelemetryBatcher
 
     public void CloseBatch()
     {
-        lock (_lock) {
+        lock (_lock)
+        {
             DateTime batchTimestamp;
             TelemetryPacket[] batchArray = _packetsThisBatch.ToArray();
             (DateTime timestamp, TelemetryPacket[] packet) batchItem;
@@ -101,15 +105,16 @@ public class TelemetryBatcher
     {
         lock (_lock)
         {
-            return [.. _recentPackets
-                .Where(t => t.packet != null)
-                .Select(t => new TelemetryBatch
-                {
-                    Timestamp = t.timestamp,
-                    Packets = [.. t.packet]
-                })];
+            return
+            [
+                .. _recentPackets
+                    .Where(t => t.packet != null)
+                    .Select(t => new TelemetryBatch
+                    {
+                        Timestamp = t.timestamp,
+                        Packets = [.. t.packet],
+                    }),
+            ];
         }
     }
-
 }
-

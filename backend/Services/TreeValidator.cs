@@ -4,7 +4,6 @@ namespace backend.Services;
 
 public static class TreeValidator
 {
-
     public static TreeValidationResult Validate(IEnumerable<Region> regions)
     {
         var errors = new List<string>();
@@ -51,9 +50,9 @@ public static class TreeValidator
                 if (next.Chainage <= current.Chainage)
                 {
                     errors.Add(
-                        $"SubZone {subZone.SubZoneId} sequencing error at node: {next.DeviceId} of category {next.Category} " +
-                        $"({next.Chainage} km) must be greater than previous node {current.DeviceId} of category {current.Category}" +
-                        $"({current.Chainage} km)."
+                        $"SubZone {subZone.SubZoneId} sequencing error at node: {next.DeviceId} of category {next.Category} "
+                            + $"({next.Chainage} km) must be greater than previous node {current.DeviceId} of category {current.Category}"
+                            + $"({current.Chainage} km)."
                     );
                 }
             }
@@ -72,7 +71,9 @@ public static class TreeValidator
             }
             else
             {
-                errors.Add($"Zone {zone.ZoneId} contains a SubZone with a malformed identifier: {sz.SubZoneId}.");
+                errors.Add(
+                    $"Zone {zone.ZoneId} contains a SubZone with a malformed identifier: {sz.SubZoneId}."
+                );
             }
         }
 
@@ -95,9 +96,9 @@ public static class TreeValidator
             if (minNextChainage <= maxCurrentChainage)
             {
                 errors.Add(
-                    $"Zone {zone.ZoneId} error: All nodes in {nextSubZone.SubZoneId} " +
-                    $"must exceed max chainage of {currentSubZone.SubZoneId} ({maxCurrentChainage} km), " +
-                    $"but found minimum chainage of {minNextChainage} km."
+                    $"Zone {zone.ZoneId} error: All nodes in {nextSubZone.SubZoneId} "
+                        + $"must exceed max chainage of {currentSubZone.SubZoneId} ({maxCurrentChainage} km), "
+                        + $"but found minimum chainage of {minNextChainage} km."
                 );
             }
         }
@@ -115,6 +116,7 @@ public static class TreeValidator
             Errors = errors;
         }
     }
+
     private static bool TryParseSubZoneIndex(string subZoneId, out int index)
     {
         var parts = subZoneId.Split('-');

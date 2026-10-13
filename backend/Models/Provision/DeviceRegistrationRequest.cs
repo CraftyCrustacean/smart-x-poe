@@ -5,7 +5,6 @@ namespace backend.Models.Provision;
 
 public class DeviceRegistrationRequest
 {
-
     [JsonPropertyName("device_id")]
     public required string DeviceId { get; set; }
 
@@ -26,8 +25,8 @@ public class DeviceRegistrationRequest
 
     [JsonPropertyName("location")]
     public required RegistrationLocationData Location { get; set; }
-
 }
+
 public class RegistrationTopologyData
 {
     [JsonPropertyName("region")]
@@ -35,7 +34,6 @@ public class RegistrationTopologyData
 
     [JsonPropertyName("zone")]
     public required string Zone { get; set; }
-
 }
 
 public class RegistrationLocationData

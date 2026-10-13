@@ -12,6 +12,7 @@ public class FlowRateAggregator
     {
         _history = history;
     }
+
     public static FlowRateAggregate FromReading(FlowRateReading reading)
     {
         ArgumentNullException.ThrowIfNull(reading);
@@ -20,7 +21,7 @@ public class FlowRateAggregator
         {
             LocationId = reading.DeviceId,
             TimeStamp = reading.TimeStamp,
-            FlowRateTotal = reading.FlowRate
+            FlowRateTotal = reading.FlowRate,
         };
     }
 

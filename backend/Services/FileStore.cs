@@ -16,7 +16,8 @@ public class FileStore
     {
         ArgumentNullException.ThrowIfNull(file);
 
-        const string sql = @"
+        const string sql =
+            @"
         INSERT INTO device_files (file_id, device_id, original_filename, stored_path, content_type, uploaded_at)
         VALUES ($1, $2, $3, $4, $5, $6);";
 
@@ -35,7 +36,8 @@ public class FileStore
     {
         ArgumentException.ThrowIfNullOrEmpty(deviceId);
 
-        const string sql = @"
+        const string sql =
+            @"
         SELECT file_id, original_filename, content_type, uploaded_at
         FROM device_files
         WHERE device_id = $1
@@ -50,13 +52,15 @@ public class FileStore
 
         while (await reader.ReadAsync())
         {
-            files.Add(new DeviceFileSummary
-            {
-                FileId = reader.GetGuid(0),
-                OriginalFilename = reader.GetString(1),
-                ContentType = reader.GetString(2),
-                UploadedAt = reader.GetDateTime(3)
-            });
+            files.Add(
+                new DeviceFileSummary
+                {
+                    FileId = reader.GetGuid(0),
+                    OriginalFilename = reader.GetString(1),
+                    ContentType = reader.GetString(2),
+                    UploadedAt = reader.GetDateTime(3),
+                }
+            );
         }
 
         return files;
@@ -64,7 +68,8 @@ public class FileStore
 
     public async Task<DeviceFile?> GetFileByIdAsync(Guid fileId)
     {
-        const string sql = @"
+        const string sql =
+            @"
         SELECT file_id, device_id, original_filename, stored_path, content_type, uploaded_at
         FROM device_files
         WHERE file_id = $1;";
@@ -83,11 +88,10 @@ public class FileStore
                 OriginalFilename = reader.GetString(2),
                 StoredPath = reader.GetString(3),
                 ContentType = reader.GetString(4),
-                UploadedAt = reader.GetDateTime(5)
+                UploadedAt = reader.GetDateTime(5),
             };
         }
 
         return null;
     }
-
 }

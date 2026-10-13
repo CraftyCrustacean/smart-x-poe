@@ -1,5 +1,5 @@
-using backend.Models.Telemetry;
 using System.Text.Json.Serialization;
+using backend.Models.Telemetry;
 
 namespace backend.Models.Readings;
 

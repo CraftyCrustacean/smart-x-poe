@@ -5,9 +5,18 @@ namespace backend.Endpoints;
 
 public static class FileEndpoints
 {
-    private static readonly HashSet<string> AllowedExtensions = new(StringComparer.OrdinalIgnoreCase)
+    private static readonly HashSet<string> AllowedExtensions = new(
+        StringComparer.OrdinalIgnoreCase
+    )
     {
-        ".csv", ".json", ".txt", ".log", ".pdf", ".png", ".jpg", ".jpeg"
+        ".csv",
+        ".json",
+        ".txt",
+        ".log",
+        ".pdf",
+        ".png",
+        ".jpg",
+        ".jpeg",
     };
 
     public static void MapFileEndpoints(this IEndpointRouteBuilder app)
@@ -15,110 +24,126 @@ public static class FileEndpoints
         var group = app.MapGroup("/api/devices");
 
         // POST /api/devices/{deviceId}/files
-        group.MapPost("/{deviceId}/files", async (
-            string deviceId,
-            IFormFile file,
-            DeviceStore store,
-            FileStore fileStore) =>
-        {
-            if (file == null || file.Length == 0)
-            {
-                return Results.BadRequest(new { message = "No file provided or file is empty." });
-            }
-
-            if (!await store.DeviceExists(deviceId))
-            {
-                return Results.NotFound(new { message = $"Device with id {deviceId} does not exist." });
-            }
-
-            if (file.Length > 5 * 1024 * 1024)
-                return Results.BadRequest(new { message = "File size exceeds 5 MB limit." });
-
-            var extension = Path.GetExtension(file.FileName);
-
-            if (string.IsNullOrEmpty(extension) || !AllowedExtensions.Contains(extension))
-            {
-                return Results.BadRequest(new
+        group
+            .MapPost(
+                "/{deviceId}/files",
+                async (string deviceId, IFormFile file, DeviceStore store, FileStore fileStore) =>
                 {
-                    message = $"File type {extension} is not allowed. Allowed formats: {string.Join(", ", AllowedExtensions)}"
-                });
-            }
+                    if (file == null || file.Length == 0)
+                    {
+                        return Results.BadRequest(
+                            new { message = "No file provided or file is empty." }
+                        );
+                    }
 
-            var fileId = Guid.NewGuid();
-            var storedFileName = $"{fileId}{extension}";
-            var basePath = "/app/uploads";
-            var targetDirectory = Path.Combine(basePath, deviceId);
-            var storedPath = Path.Combine(targetDirectory, storedFileName);
+                    if (!await store.DeviceExists(deviceId))
+                    {
+                        return Results.NotFound(
+                            new { message = $"Device with id {deviceId} does not exist." }
+                        );
+                    }
 
-            Directory.CreateDirectory(targetDirectory);
+                    if (file.Length > 5 * 1024 * 1024)
+                        return Results.BadRequest(
+                            new { message = "File size exceeds 5 MB limit." }
+                        );
 
-            await using (var stream = File.Create(storedPath))
-            {
-                await file.CopyToAsync(stream);
-            }
+                    var extension = Path.GetExtension(file.FileName);
 
-            try
-            {
-                var deviceFile = new DeviceFile
-                {
-                    FileId = fileId,
-                    DeviceId = deviceId,
-                    OriginalFilename = file.FileName,
-                    StoredPath = storedPath,
-                    ContentType = string.IsNullOrEmpty(file.ContentType) ? "application/octet-stream" : file.ContentType,
-                    UploadedAt = DateTime.UtcNow
-                };
+                    if (string.IsNullOrEmpty(extension) || !AllowedExtensions.Contains(extension))
+                    {
+                        return Results.BadRequest(
+                            new
+                            {
+                                message = $"File type {extension} is not allowed. Allowed formats: {string.Join(", ", AllowedExtensions)}",
+                            }
+                        );
+                    }
 
-                await fileStore.SaveFileDataAsync(deviceFile);
+                    var fileId = Guid.NewGuid();
+                    var storedFileName = $"{fileId}{extension}";
+                    var basePath = "/app/uploads";
+                    var targetDirectory = Path.Combine(basePath, deviceId);
+                    var storedPath = Path.Combine(targetDirectory, storedFileName);
 
-                return Results.Created($"/api/devices/{deviceId}/files/{fileId}", deviceFile);
-            }
-            catch
-            {
-                if (File.Exists(storedPath))
-                {
-                    File.Delete(storedPath);
+                    Directory.CreateDirectory(targetDirectory);
+
+                    await using (var stream = File.Create(storedPath))
+                    {
+                        await file.CopyToAsync(stream);
+                    }
+
+                    try
+                    {
+                        var deviceFile = new DeviceFile
+                        {
+                            FileId = fileId,
+                            DeviceId = deviceId,
+                            OriginalFilename = file.FileName,
+                            StoredPath = storedPath,
+                            ContentType = string.IsNullOrEmpty(file.ContentType)
+                                ? "application/octet-stream"
+                                : file.ContentType,
+                            UploadedAt = DateTime.UtcNow,
+                        };
+
+                        await fileStore.SaveFileDataAsync(deviceFile);
+
+                        return Results.Created(
+                            $"/api/devices/{deviceId}/files/{fileId}",
+                            deviceFile
+                        );
+                    }
+                    catch
+                    {
+                        if (File.Exists(storedPath))
+                        {
+                            File.Delete(storedPath);
+                        }
+                        throw;
+                    }
                 }
-                throw;
-            }
-        }).DisableAntiforgery();
+            )
+            .DisableAntiforgery();
 
         // GET /api/devices/{deviceId}/files
-        group.MapGet("/{deviceId}/files", async (
-            string deviceId,
-            DeviceStore store,
-            FileStore fileStore) =>
-        {
-            if (!await store.DeviceExists(deviceId))
+        group.MapGet(
+            "/{deviceId}/files",
+            async (string deviceId, DeviceStore store, FileStore fileStore) =>
             {
-                return Results.NotFound(new { message = $"Device with id {deviceId} does not exist." });
-            }
+                if (!await store.DeviceExists(deviceId))
+                {
+                    return Results.NotFound(
+                        new { message = $"Device with id {deviceId} does not exist." }
+                    );
+                }
 
-            var files = await fileStore.GetFilesByDeviceIdAsync(deviceId);
-            return Results.Ok(files);
-        });
+                var files = await fileStore.GetFilesByDeviceIdAsync(deviceId);
+                return Results.Ok(files);
+            }
+        );
 
         // GET /api/devices/{deviceId}/files/{fileId}
-        group.MapGet("/{deviceId}/files/{fileId}", async (
-            string deviceId,
-            Guid fileId,
-            FileStore fileStore) =>
-        {
-            var file = await fileStore.GetFileByIdAsync(fileId);
-
-            if (file == null || file.DeviceId != deviceId)
+        group.MapGet(
+            "/{deviceId}/files/{fileId}",
+            async (string deviceId, Guid fileId, FileStore fileStore) =>
             {
-                return Results.NotFound(new { message = "File not found for this device." });
-            }
+                var file = await fileStore.GetFileByIdAsync(fileId);
 
-            if (!File.Exists(file.StoredPath))
-            {
-                return Results.NotFound(new { message = "File should exist but is missing on disk." });
-            }
+                if (file == null || file.DeviceId != deviceId)
+                {
+                    return Results.NotFound(new { message = "File not found for this device." });
+                }
 
-            return Results.File(file.StoredPath, file.ContentType, file.OriginalFilename);
-        });
+                if (!File.Exists(file.StoredPath))
+                {
+                    return Results.NotFound(
+                        new { message = "File should exist but is missing on disk." }
+                    );
+                }
+
+                return Results.File(file.StoredPath, file.ContentType, file.OriginalFilename);
+            }
+        );
     }
-
 }
-

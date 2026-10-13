@@ -4,7 +4,6 @@ namespace backend.Services;
 
 public class FlowRateHistory
 {
-
     private Dictionary<string, FlowRateReading> _currentFlowRateReading = new();
 
     public bool TryGetPrevious(string deviceId, out FlowRateReading? previous)
@@ -16,6 +15,4 @@ public class FlowRateHistory
     {
         _currentFlowRateReading[deviceId] = reading;
     }
-
 }
-

@@ -4,7 +4,6 @@ namespace backend.Services;
 
 public class EnvironmentalHistory
 {
-
     private Dictionary<string, EnvironmentalReading> _previousEnvironmentalReading = new();
 
     public bool TryGetPrevious(string deviceId, out EnvironmentalReading? previous)
@@ -16,6 +15,4 @@ public class EnvironmentalHistory
     {
         _previousEnvironmentalReading[deviceId] = reading;
     }
-
 }
-

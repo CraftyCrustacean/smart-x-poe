@@ -9,7 +9,7 @@ public enum TelemetryUpdateResult
 {
     Applied,
     Stale,
-    UnknownDevice
+    UnknownDevice,
 }
 
 public class DeviceRegistry
@@ -34,7 +34,11 @@ public class DeviceRegistry
         return _devices.Values.ToArray();
     }
 
-    public TelemetryUpdateResult RecordTelemetry(string deviceId, DateTime receivedAtUtc, int batteryPct)
+    public TelemetryUpdateResult RecordTelemetry(
+        string deviceId,
+        DateTime receivedAtUtc,
+        int batteryPct
+    )
     {
         while (true)
         {
@@ -49,7 +53,6 @@ public class DeviceRegistry
 
             if (_devices.TryUpdate(deviceId, updated, current))
                 return TelemetryUpdateResult.Applied;
-
         }
     }
 }

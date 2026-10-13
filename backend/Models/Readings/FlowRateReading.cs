@@ -1,5 +1,5 @@
-﻿using backend.Models.Telemetry;
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
+using backend.Models.Telemetry;
 
 namespace backend.Models.Readings;
 
@@ -12,45 +12,52 @@ public class FlowRateReading : SensorReading
     {
         List<TelemetryPacket> allFlowRatePackets = new();
 
-        allFlowRatePackets.Add(new TelemetryPacket<float>
-        {
-            DeviceId = this.DeviceId,
-            TimeStamp = this.TimeStamp,
-            MetricName = "flow_rate_lps",
-            Value = this.FlowRate
-        });
+        allFlowRatePackets.Add(
+            new TelemetryPacket<float>
+            {
+                DeviceId = this.DeviceId,
+                TimeStamp = this.TimeStamp,
+                MetricName = "flow_rate_lps",
+                Value = this.FlowRate,
+            }
+        );
 
-        allFlowRatePackets.Add(new TelemetryPacket<int>
-        {
-            DeviceId = this.DeviceId,
-            TimeStamp = this.TimeStamp,
-            MetricName = "battery_level_pct",
-            Value = this.BatteryLevel
-        });
+        allFlowRatePackets.Add(
+            new TelemetryPacket<int>
+            {
+                DeviceId = this.DeviceId,
+                TimeStamp = this.TimeStamp,
+                MetricName = "battery_level_pct",
+                Value = this.BatteryLevel,
+            }
+        );
 
         return allFlowRatePackets;
     }
 
-    public static FlowRateAggregate operator + (FlowRateReading firstReading, FlowRateReading secondReading)
+    public static FlowRateAggregate operator +(
+        FlowRateReading firstReading,
+        FlowRateReading secondReading
+    )
     {
         return new FlowRateAggregate
         {
-
             FlowRateTotal = firstReading.FlowRate + secondReading.FlowRate,
             TimeStamp = firstReading.TimeStamp,
-
         };
     }
-
 }
 
 public class FlowRateAggregate
 {
-    public string? LocationId { get; set;}
-    public required DateTime TimeStamp { get; set;}
+    public string? LocationId { get; set; }
+    public required DateTime TimeStamp { get; set; }
     public required float FlowRateTotal { get; set; }
 
-    public static FlowRateAggregate operator +(FlowRateAggregate firstAggregate, FlowRateAggregate secondAggregate)
+    public static FlowRateAggregate operator +(
+        FlowRateAggregate firstAggregate,
+        FlowRateAggregate secondAggregate
+    )
     {
         var t = firstAggregate.TimeStamp;
         var t1 = secondAggregate.TimeStamp;
@@ -61,13 +68,10 @@ public class FlowRateAggregate
         //if (t != t1) { throw new ArgumentException($"Cannot aggregate flow rates across different batches."); }
         return new FlowRateAggregate
         {
-
             TimeStamp = t1,
-            FlowRateTotal = firstAggregate.FlowRateTotal + secondAggregate.FlowRateTotal
+            FlowRateTotal = firstAggregate.FlowRateTotal + secondAggregate.FlowRateTotal,
         };
-
     }
-
 }
 
 public class FlowRateTotal

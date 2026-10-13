@@ -9,11 +9,13 @@ public static class TelemetryEndpoints
         var group = app.MapGroup("/api/telemetry");
 
         // GET /api/telemetry/recent
-        group.MapGet("/recent", (TelemetryBatcher batcher) =>
-        {
-            var recentBatches = batcher.GetRecentBatches();
-            return Results.Ok(recentBatches);
-        });
+        group.MapGet(
+            "/recent",
+            (TelemetryBatcher batcher) =>
+            {
+                var recentBatches = batcher.GetRecentBatches();
+                return Results.Ok(recentBatches);
+            }
+        );
     }
 }
-

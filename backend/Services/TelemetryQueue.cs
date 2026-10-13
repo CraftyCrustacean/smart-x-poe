@@ -3,7 +3,13 @@ using backend.Models.Telemetry;
 
 namespace backend.Services;
 
-public sealed record QueueStats(int FifoDepth, int SignalCount, long Enqueued, long Dequeued, int MaxFifoDepth);
+public sealed record QueueStats(
+    int FifoDepth,
+    int SignalCount,
+    long Enqueued,
+    long Dequeued,
+    int MaxFifoDepth
+);
 
 public sealed class TelemetryQueue
 {
@@ -23,7 +29,8 @@ public sealed class TelemetryQueue
         {
             _fifo.Enqueue(new QueuedTelemetry(reading, receivedAtUtc, ++_sequence));
             _enqueued++;
-            if (_fifo.Count > _maxFifoDepth) _maxFifoDepth = _fifo.Count;
+            if (_fifo.Count > _maxFifoDepth)
+                _maxFifoDepth = _fifo.Count;
         }
 
         _signal.Release();
@@ -44,7 +51,13 @@ public sealed class TelemetryQueue
     {
         lock (_lock)
         {
-            return new QueueStats(_fifo.Count, _signal.CurrentCount, _enqueued, _dequeued, _maxFifoDepth);
+            return new QueueStats(
+                _fifo.Count,
+                _signal.CurrentCount,
+                _enqueued,
+                _dequeued,
+                _maxFifoDepth
+            );
         }
     }
 }

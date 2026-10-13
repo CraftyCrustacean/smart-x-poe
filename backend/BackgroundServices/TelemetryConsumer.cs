@@ -9,7 +9,11 @@ public class TelemetryConsumer : BackgroundService
     private readonly TelemetryProcessor _processor;
     private readonly ILogger<TelemetryConsumer> _logger;
 
-    public TelemetryConsumer(TelemetryQueue queue, TelemetryProcessor processor, ILogger<TelemetryConsumer> logger)
+    public TelemetryConsumer(
+        TelemetryQueue queue,
+        TelemetryProcessor processor,
+        ILogger<TelemetryConsumer> logger
+    )
     {
         _queue = queue;
         _processor = processor;
@@ -37,7 +41,11 @@ public class TelemetryConsumer : BackgroundService
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Failed to process telemetry from {DeviceId}.", item.Reading.DeviceId);
+                _logger.LogError(
+                    ex,
+                    "Failed to process telemetry from {DeviceId}.",
+                    item.Reading.DeviceId
+                );
             }
         }
     }

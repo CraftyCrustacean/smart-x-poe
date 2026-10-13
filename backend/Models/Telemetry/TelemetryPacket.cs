@@ -5,7 +5,6 @@ public class TelemetryPacket
     public required string DeviceId { get; set; }
     public required DateTime TimeStamp { get; set; }
     public required string MetricName { get; set; }
-
 }
 
 public class TelemetryPacket<T> : TelemetryPacket
