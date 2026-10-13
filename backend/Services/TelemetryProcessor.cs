@@ -18,6 +18,7 @@ public class TelemetryProcessor
     private readonly ReadingHistory<EnvironmentalReading> _environmentalTimeline;
     private readonly ReadingHistory<ActuatorReading> _actuatorTimeline;
     private readonly ReadingHistory<FlowRateReading> _flowRateTimeline;
+    private readonly ThresholdEvaluator _thresholdEvaluator;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -29,7 +30,8 @@ public class TelemetryProcessor
         TelemetryQueue telemetryQueue,
         ReadingHistory<EnvironmentalReading> environmentalTimeline,
         ReadingHistory<ActuatorReading> actuatorTimeline,
-        ReadingHistory<FlowRateReading> flowRateTimeline
+        ReadingHistory<FlowRateReading> flowRateTimeline,
+        ThresholdEvaluator thresholdEvaluator
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -42,6 +44,7 @@ public class TelemetryProcessor
         _environmentalTimeline = environmentalTimeline;
         _actuatorTimeline = actuatorTimeline;
         _flowRateTimeline = flowRateTimeline;
+        _thresholdEvaluator = thresholdEvaluator;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -110,7 +113,7 @@ public class TelemetryProcessor
                 return;
             }
 
-            _telemetryQueue.Enqueue(reading, receivedAtUtc);
+            _telemetryQueue.Enqueue(reading, receivedAtUtc, _thresholdEvaluator.Evaluate(reading));
         }
         catch (JsonException ex)
         {
