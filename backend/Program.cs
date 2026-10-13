@@ -44,6 +44,10 @@ builder.Services.AddSingleton<DisconnectedDevices>();
 builder.Services.AddSingleton<ActiveAlerts>();
 builder.Services.AddSingleton<DisconnectDetector>();
 builder.Services.AddHostedService<BatchCloseHandler>();
+builder.Services.Configure<ThresholdSettings>(
+    builder.Configuration.GetSection(ThresholdSettings.ThresholdSettingsName)
+);
+builder.Services.AddSingleton<ThresholdEvaluator>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
