@@ -16,6 +16,8 @@ public class TelemetryBatcher
     private readonly Lock _lock = new();
     private readonly Timer _timer;
 
+    public event Action<TelemetryBatch>? BatchClosed;
+
     public TelemetryBatcher(ILogger<TelemetryBatcher> logger)
     {
         _logger = logger;
@@ -58,46 +60,59 @@ public class TelemetryBatcher
         }
     }
 
-    public void CloseBatch()
+    private TelemetryBatch? CloseBatchLocked()
     {
-        lock (_lock)
+        if (_currentAnchor == null)
         {
-            DateTime batchTimestamp;
-            TelemetryPacket[] batchArray = _packetsThisBatch.ToArray();
-            (DateTime timestamp, TelemetryPacket[] packet) batchItem;
+            _logger.LogWarning("Cannot create batch with no timestamp anchor.");
+            return null;
+        }
 
-            if (_currentAnchor != null)
-            {
-                batchTimestamp = (DateTime)_currentAnchor;
-                batchItem = (batchTimestamp, batchArray);
-                _recentPackets[_writeIndex] = batchItem;
-                _writeIndex = (_writeIndex + 1) % _recentPackets.Length;
-                _currentAnchor = null;
-                _packetsThisBatch = [];
+        var batchTimestamp = _currentAnchor.Value;
+        var batchArray = _packetsThisBatch.ToArray();
 
-                _logger.LogInformation("Batch completed");
-            }
-            else
-            {
-                _logger.LogWarning("Cannot create batch with no timestamp anchor.");
-            }
+        _recentPackets[_writeIndex] = (batchTimestamp, batchArray);
+        _writeIndex = (_writeIndex + 1) % _recentPackets.Length;
+        _currentAnchor = null;
+        _packetsThisBatch = [];
+
+        _logger.LogInformation("Batch completed");
+
+        return new TelemetryBatch { Timestamp = batchTimestamp, Packets = [.. batchArray] };
+    }
+
+    private void RaiseBatchClosed(TelemetryBatch batch)
+    {
+        try
+        {
+            BatchClosed?.Invoke(batch);
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "A batch close handler failed.");
         }
     }
 
     private void CheckPacketInterval(object? state)
     {
+        TelemetryBatch? closed = null;
+
         lock (_lock)
         {
-            if (_currentAnchor != null && _MostRecentPacketArrivalTime != null)
+            if (
+                _currentAnchor != null
+                && _MostRecentPacketArrivalTime != null
+                && (DateTime.Now - _MostRecentPacketArrivalTime.Value).TotalSeconds > 5
+            )
             {
-                TimeSpan timeDelta = (DateTime.Now - _MostRecentPacketArrivalTime.Value);
-
-                if (timeDelta.TotalSeconds > 5)
-                {
-                    CloseBatch();
-                    _logger.LogInformation("5 seconds without new packet. Closing Batch.");
-                }
+                closed = CloseBatchLocked();
+                _logger.LogInformation("5 seconds without new packet. Closing Batch.");
             }
+        }
+
+        if (closed != null)
+        {
+            RaiseBatchClosed(closed);
         }
     }
 
