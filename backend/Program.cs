@@ -40,6 +40,10 @@ builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<TelemetryQueue>();
 builder.Services.AddHostedService<TelemetryConsumer>();
 builder.Services.AddSingleton(typeof(ReadingHistory<>));
+builder.Services.AddSingleton<DisconnectedDevices>();
+builder.Services.AddSingleton<ActiveAlerts>();
+builder.Services.AddSingleton<DisconnectDetector>();
+builder.Services.AddHostedService<BatchCloseHandler>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
