@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using backend.Models.Live;
 using backend.Models.Provision;
 using backend.Models.Readings;
 using backend.Models.State;
@@ -24,6 +25,7 @@ public class TelemetryProcessor
     private readonly ReadingHistory<FlowRateReading> _flowRateTimeline;
     private readonly ThresholdEvaluator _thresholdEvaluator;
     private readonly ActiveAlerts _activeAlerts;
+    private readonly LiveUpdates _liveUpdates;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -37,7 +39,8 @@ public class TelemetryProcessor
         ReadingHistory<ActuatorReading> actuatorTimeline,
         ReadingHistory<FlowRateReading> flowRateTimeline,
         ThresholdEvaluator thresholdEvaluator,
-        ActiveAlerts activeAlerts
+        ActiveAlerts activeAlerts,
+        LiveUpdates liveUpdates
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -52,6 +55,7 @@ public class TelemetryProcessor
         _flowRateTimeline = flowRateTimeline;
         _thresholdEvaluator = thresholdEvaluator;
         _activeAlerts = activeAlerts;
+        _liveUpdates = liveUpdates;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -174,6 +178,22 @@ public class TelemetryProcessor
                             check.Value,
                             check.Severity
                         );
+
+                        if (_deviceRegistry.TryGet(reading.DeviceId, out var device))
+                        {
+                            _liveUpdates.AlertRaised(
+                                new AlertEvent(
+                                    reading.DeviceId,
+                                    device.Zone,
+                                    device.Subzone,
+                                    check.Metric,
+                                    check.Value,
+                                    check.Severity,
+                                    reading.TimeStamp,
+                                    DateTime.UtcNow
+                                )
+                            );
+                        }
                     }
                 }
                 else if (_activeAlerts.Remove(key))

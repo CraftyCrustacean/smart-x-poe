@@ -1,5 +1,7 @@
 using backend.BackgroundServices;
 using backend.Endpoints;
+using backend.Hubs;
+using backend.Services;
 using backend.Services.History;
 using backend.Services.Persistence;
 using backend.Services.Snapshots;
@@ -18,7 +20,11 @@ builder.Services.AddCors(options =>
         name: myAllowSpecificOrigins,
         policy =>
         {
-            policy.WithOrigins("http://localhost:5173").AllowAnyHeader().AllowAnyMethod();
+            policy
+                .WithOrigins("http://localhost:5173")
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials();
         }
     );
 });
@@ -56,6 +62,8 @@ builder.Services.AddSingleton<ThresholdEvaluator>();
 builder.Services.AddSingleton<SnapshotStore>();
 builder.Services.AddSingleton<SnapshotBuilder>();
 builder.Services.AddSingleton<DashboardSummaryService>();
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<LiveUpdates>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -88,6 +96,7 @@ app.MapTelemetryEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapSnapshotEndpoints();
 app.MapDashboardEndpoints();
+app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",
     (MqttConnectionStatus health) =>
