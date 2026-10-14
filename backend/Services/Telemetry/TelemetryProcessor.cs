@@ -3,9 +3,12 @@ using backend.Models.Provision;
 using backend.Models.Readings;
 using backend.Models.State;
 using backend.Models.Telemetry;
+using backend.Services.History;
+using backend.Services.Persistence;
+using backend.Services.State;
 using static backend.Models.Provision.ProvisionData;
 
-namespace backend.Services;
+namespace backend.Services.Telemetry;
 
 public class TelemetryProcessor
 {

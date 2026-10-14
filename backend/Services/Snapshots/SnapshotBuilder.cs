@@ -1,7 +1,9 @@
 using backend.Models.Snapshots;
 using backend.Models.Telemetry;
+using backend.Services.State;
+using backend.Services.Telemetry;
 
-namespace backend.Services;
+namespace backend.Services.Snapshots;
 
 public sealed class SnapshotBuilder
 {

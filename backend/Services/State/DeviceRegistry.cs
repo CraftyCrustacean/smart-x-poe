@@ -3,7 +3,7 @@ using System.Diagnostics.CodeAnalysis;
 using backend.Models.Provision;
 using backend.Models.State;
 
-namespace backend.Services;
+namespace backend.Services.State;
 
 public enum TelemetryUpdateResult
 {

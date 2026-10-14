@@ -1,6 +1,6 @@
 ﻿using backend.Models.Topology;
 
-namespace backend.Services;
+namespace backend.Services.Topology;
 
 public static class TreeValidator
 {

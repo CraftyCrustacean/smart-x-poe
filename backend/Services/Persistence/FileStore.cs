@@ -1,7 +1,7 @@
 ﻿using backend.Models.Files;
 using Npgsql;
 
-namespace backend.Services;
+namespace backend.Services.Persistence;
 
 public class FileStore
 {

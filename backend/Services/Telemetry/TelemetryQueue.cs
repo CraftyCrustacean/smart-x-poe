@@ -1,7 +1,7 @@
 using backend.Models.Readings;
 using backend.Models.Telemetry;
 
-namespace backend.Services;
+namespace backend.Services.Telemetry;
 
 public sealed record QueueStats(
     int FifoDepth,

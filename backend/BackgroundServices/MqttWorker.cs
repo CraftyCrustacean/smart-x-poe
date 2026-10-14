@@ -1,8 +1,9 @@
 using System.Text;
-using backend.Services;
-using backend.Settings;
-using Microsoft.Extensions.Options;
 using MQTTnet;
+using Microsoft.Extensions.Options;
+using backend.Services.State;
+using backend.Services.Telemetry;
+using backend.Settings;
 
 namespace backend.BackgroundServices;
 

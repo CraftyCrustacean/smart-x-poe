@@ -1,7 +1,8 @@
 using backend.Models.Live;
 using backend.Models.Telemetry;
+using backend.Services.State;
 
-namespace backend.Services;
+namespace backend.Services.Snapshots;
 
 public sealed class DashboardSummaryService
 {

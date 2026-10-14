@@ -1,6 +1,6 @@
 using backend.Models.State;
 
-namespace backend.Services;
+namespace backend.Services.State;
 
 public abstract class LockedSet<T>
 {

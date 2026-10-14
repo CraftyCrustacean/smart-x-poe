@@ -3,7 +3,7 @@ using backend.Models.Telemetry;
 using backend.Settings;
 using Microsoft.Extensions.Options;
 
-namespace backend.Services;
+namespace backend.Services.Telemetry;
 
 public sealed class ThresholdEvaluator
 {

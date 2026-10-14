@@ -1,6 +1,6 @@
 using backend.Models.Snapshots;
 
-namespace backend.Services;
+namespace backend.Services.Snapshots;
 
 public sealed class SnapshotStore
 {

@@ -1,5 +1,5 @@
 using backend.Models.Telemetry;
-using backend.Services;
+using backend.Services.Telemetry;
 
 namespace backend.BackgroundServices;
 

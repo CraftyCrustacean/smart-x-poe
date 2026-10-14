@@ -1,7 +1,7 @@
 ﻿using backend.Models.Provision;
 using backend.Models.Topology;
 
-namespace backend.Services;
+namespace backend.Services.Topology;
 
 public class TopologyBuilder
 {

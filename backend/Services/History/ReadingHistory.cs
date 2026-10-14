@@ -1,6 +1,6 @@
 using backend.Models.Readings;
 
-namespace backend.Services;
+namespace backend.Services.History;
 
 public sealed class ReadingHistory<TReading>
     where TReading : SensorReading

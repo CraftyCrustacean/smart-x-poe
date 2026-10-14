@@ -1,6 +1,7 @@
 using backend.Models.Telemetry;
+using backend.Services.State;
 
-namespace backend.Services;
+namespace backend.Services.Telemetry;
 
 public sealed record DisconnectResult(
     int NewlyDisconnected,

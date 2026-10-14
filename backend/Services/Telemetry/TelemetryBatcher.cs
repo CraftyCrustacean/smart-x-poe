@@ -1,6 +1,6 @@
 ﻿using backend.Models.Telemetry;
 
-namespace backend.Services;
+namespace backend.Services.Telemetry;
 
 public class TelemetryBatcher
 {

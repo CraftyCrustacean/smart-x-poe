@@ -3,7 +3,7 @@ using backend.Models.Telemetry;
 using Npgsql;
 using static backend.Models.Provision.ProvisionData;
 
-namespace backend.Services;
+namespace backend.Services.Persistence;
 
 public class DeviceStore
 {

@@ -1,7 +1,7 @@
 ﻿using System.Diagnostics.CodeAnalysis;
 using backend.Models.Readings;
 
-namespace backend.Services;
+namespace backend.Services.History;
 
 public class EnvironmentalHistory
 {
