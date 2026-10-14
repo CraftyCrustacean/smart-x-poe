@@ -50,6 +50,7 @@ builder.Services.Configure<ThresholdSettings>(
 builder.Services.AddSingleton<ThresholdEvaluator>();
 builder.Services.AddSingleton<SnapshotStore>();
 builder.Services.AddSingleton<SnapshotBuilder>();
+builder.Services.AddSingleton<DashboardSummaryService>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -81,6 +82,7 @@ app.MapTopologyEndpoints();
 app.MapTelemetryEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapSnapshotEndpoints();
+app.MapDashboardEndpoints();
 app.MapGet(
     "/health",
     (MqttConnectionStatus health) =>

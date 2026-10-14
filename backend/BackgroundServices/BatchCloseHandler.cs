@@ -9,18 +9,21 @@ public sealed class BatchCloseHandler : IHostedService
     private readonly DisconnectDetector _disconnectDetector;
     private readonly ILogger<BatchCloseHandler> _logger;
     private readonly SnapshotBuilder _snapshotBuilder;
+    private readonly DashboardSummaryService _summaryService;
 
     public BatchCloseHandler(
         TelemetryBatcher batcher,
         DisconnectDetector disconnectDetector,
         ILogger<BatchCloseHandler> logger,
-        SnapshotBuilder snapshotBuilder
+        SnapshotBuilder snapshotBuilder,
+        DashboardSummaryService summaryService
     )
     {
         _batcher = batcher;
         _disconnectDetector = disconnectDetector;
         _logger = logger;
         _snapshotBuilder = snapshotBuilder;
+        _summaryService = summaryService;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -39,6 +42,7 @@ public sealed class BatchCloseHandler : IHostedService
     {
         var disconnects = _disconnectDetector.Detect(batch);
         var scopes = _snapshotBuilder.Build(batch);
+        _summaryService.RecordBatch(batch);
 
         _logger.LogInformation(
             "Batch {BatchDate:yyyy-MM-dd} closed: {PacketCount} packets, {Scopes} scope snapshots, {New} newly disconnected, {Back} reconnected, {Offline} offline.",
