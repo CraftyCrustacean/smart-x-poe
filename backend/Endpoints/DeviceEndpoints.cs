@@ -1,8 +1,11 @@
-﻿using backend.Models.Provision;
+﻿using backend.Models.Live;
+using backend.Models.Provision;
 using backend.Models.Readings;
+using backend.Models.State;
 using backend.Services.History;
 using backend.Services.Persistence;
 using backend.Services.State;
+using backend.Services.Telemetry;
 using backend.Services.Topology;
 using static backend.Models.Provision.ProvisionData;
 
@@ -110,10 +113,26 @@ public static class DeviceEndpoints
         // GET /api/devices/{deviceId}/state
         group.MapGet(
             "/{deviceId}/state",
-            (string deviceId, DeviceRegistry registry) =>
-                registry.TryGet(deviceId, out var state)
-                    ? Results.Ok(state)
-                    : Results.NotFound(new { message = $"Device {deviceId} is not registered." })
+            (
+                string deviceId,
+                DeviceRegistry registry,
+                DisconnectedDevices disconnected,
+                ActiveAlerts alerts
+            ) =>
+            {
+                if (!registry.TryGet(deviceId, out var state))
+                    return Results.NotFound(
+                        new { message = $"Device {deviceId} is not registered." }
+                    );
+
+                var activeAlerts = ThresholdEvaluator
+                    .Metrics.Where(m => alerts.Contains(new AlertKey(deviceId, m)))
+                    .ToList();
+
+                return Results.Ok(
+                    new DeviceLiveView(state, disconnected.Contains(deviceId), activeAlerts)
+                );
+            }
         );
 
         // GET /api/devices/{deviceId}/readings

@@ -8,6 +8,13 @@ namespace backend.Services.Telemetry;
 public sealed class ThresholdEvaluator
 {
     private readonly ThresholdSettings _thresholds;
+    public static readonly string[] Metrics =
+    [
+        "elevation_change_mm",
+        "surface_temperature_c",
+        "colour_shift_index",
+        "flow_rate_lps",
+    ];
 
     public ThresholdEvaluator(IOptions<ThresholdSettings> options)
     {

@@ -1,8 +1,15 @@
+using backend.Models.State;
 using static backend.Models.Provision.ProvisionData;
 
 namespace backend.Models.Live;
 
 public sealed record CategoryCount(DeviceCategory Category, int Total, int Offline);
+
+public sealed record DeviceLiveView(
+    DeviceState State,
+    bool Offline,
+    IReadOnlyList<string> ActiveAlerts
+);
 
 public sealed record DashboardSummary(
     DateTime? LastBatchTimestamp,
