@@ -80,6 +80,7 @@ app.MapFileEndpoints();
 app.MapTopologyEndpoints();
 app.MapTelemetryEndpoints();
 app.MapDiagnosticsEndpoints();
+app.MapSnapshotEndpoints();
 app.MapGet(
     "/health",
     (MqttConnectionStatus health) =>
