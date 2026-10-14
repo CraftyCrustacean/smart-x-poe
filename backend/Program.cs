@@ -48,6 +48,8 @@ builder.Services.Configure<ThresholdSettings>(
     builder.Configuration.GetSection(ThresholdSettings.ThresholdSettingsName)
 );
 builder.Services.AddSingleton<ThresholdEvaluator>();
+builder.Services.AddSingleton<SnapshotStore>();
+builder.Services.AddSingleton<SnapshotBuilder>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"

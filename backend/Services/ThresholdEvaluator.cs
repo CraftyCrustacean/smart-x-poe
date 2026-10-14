@@ -19,17 +19,24 @@ public sealed class ThresholdEvaluator
         {
             EnvironmentalReading e => new[]
             {
-                Check("elevation_change_mm", e.ElevationChange, _thresholds.ElevationChangeMm),
-                Check("surface_temperature_c", e.SurfaceTemp, _thresholds.SurfaceTemperatureC),
-                Check("colour_shift_index", e.ColourShift, _thresholds.ColourShiftIndex),
+                Check("elevation_change_mm", e.ElevationChange),
+                Check("surface_temperature_c", e.SurfaceTemp),
+                Check("colour_shift_index", e.ColourShift),
             },
-            FlowRateReading f => new[]
-            {
-                Check("flow_rate_lps", f.FlowRate, _thresholds.FlowRateLps),
-            },
+            FlowRateReading f => new[] { Check("flow_rate_lps", f.FlowRate) },
             _ => Array.Empty<MetricCheck>(),
         };
 
-    private static MetricCheck Check(string metric, float value, MetricThreshold threshold) =>
-        new(metric, value, threshold.Severity(value));
+    public float SeverityFor(string metric, float value) =>
+        metric switch
+        {
+            "elevation_change_mm" => _thresholds.ElevationChangeMm.Severity(value),
+            "surface_temperature_c" => _thresholds.SurfaceTemperatureC.Severity(value),
+            "colour_shift_index" => _thresholds.ColourShiftIndex.Severity(value),
+            "flow_rate_lps" => _thresholds.FlowRateLps.Severity(value),
+            _ => 0f,
+        };
+
+    private MetricCheck Check(string metric, float value) =>
+        new(metric, value, SeverityFor(metric, value));
 }
