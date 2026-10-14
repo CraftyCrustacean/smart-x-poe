@@ -69,13 +69,9 @@ class EnvironmentalSensor(SensorDevice):
         drift = max(-15.0, -2.0 * math.log1p(self.tick)) if self.is_at_risk else 0.0
         self.elevation_change_mm = drift + noise
 
-        # Surface temp changes
-        noise = rng.gauss(0, 0.8)
-        anomaly = 0
-        if self.is_at_risk and rng.random() < 0.08:
-            # Add a number between 3 and 7 to at risk sensors
-            anomaly = rng.uniform(3,7)
-        self.surface_temperature_c = 18 + noise + anomaly
+        # Surface temp, at risk points slowly warming
+        target = 25.0 if self.is_at_risk else 18.0
+        self.surface_temperature_c += (target - self.surface_temperature_c) * 0.05 + rng.gauss(0, 0.2)
 
         # Colour shift, at risk points trending toward a lower value
         target = -0.4 if self.is_at_risk else 0.0
