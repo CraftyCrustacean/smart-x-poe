@@ -25,6 +25,7 @@ public sealed class SnapshotBuilder
     public int Build(TelemetryBatch batch)
     {
         var accumulators = new Dictionary<(ScopeKey Scope, string Metric), Accumulator>();
+        var breaches = new Dictionary<ScopeKey, Dictionary<(string, string), BreachingReading>>();
 
         foreach (var packet in batch.Packets)
         {
@@ -46,7 +47,8 @@ public sealed class SnapshotBuilder
                     continue;
             }
 
-            var breaching = _thresholds.SeverityFor(packet.MetricName, value) > 0;
+            var severity = _thresholds.SeverityFor(packet.MetricName, value);
+            var breaching = severity > 0;
 
             Accumulate(
                 accumulators,
@@ -62,6 +64,15 @@ public sealed class SnapshotBuilder
                 value,
                 breaching
             );
+
+            if (breaching)
+            {
+                RecordBreach(
+                    breaches,
+                    new ScopeKey(device.Zone, device.Subzone),
+                    new BreachingReading(packet.DeviceId, packet.MetricName, value, severity, 1)
+                );
+            }
         }
 
         var snapshots = accumulators
@@ -70,12 +81,38 @@ public sealed class SnapshotBuilder
                 scopeGroup => scopeGroup.Key,
                 scopeGroup => new ScopeSnapshot(
                     batch.Timestamp,
-                    scopeGroup.ToDictionary(e => e.Key.Metric, e => e.Value.ToSummary())
+                    scopeGroup.ToDictionary(e => e.Key.Metric, e => e.Value.ToSummary()),
+                    breaches.TryGetValue(scopeGroup.Key, out var scopeBreaches)
+                        ? scopeBreaches.Values.OrderByDescending(b => b.Severity).ToList()
+                        : []
                 )
             );
 
         _store.AddBatch(snapshots);
         return snapshots.Count;
+    }
+
+    private static void RecordBreach(
+        Dictionary<ScopeKey, Dictionary<(string, string), BreachingReading>> breaches,
+        ScopeKey scope,
+        BreachingReading reading
+    )
+    {
+        if (!breaches.TryGetValue(scope, out var byDevice))
+        {
+            byDevice = [];
+            breaches[scope] = byDevice;
+        }
+
+        var key = (reading.DeviceId, reading.Metric);
+        if (!byDevice.TryGetValue(key, out var existing))
+        {
+            byDevice[key] = reading;
+            return;
+        }
+
+        var worst = reading.Severity > existing.Severity ? reading : existing;
+        byDevice[key] = worst with { Readings = existing.Readings + 1 };
     }
 
     private static void Accumulate(
