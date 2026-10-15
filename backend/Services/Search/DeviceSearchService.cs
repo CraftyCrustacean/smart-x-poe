@@ -81,6 +81,10 @@ public sealed class DeviceSearchService
             matches = matches.Where(d => d.BatteryPct <= _lowBattery);
         if (query.Override == true)
             matches = matches.Where(d => IsActive(d.Override, now));
+        if (query.MinKm is { } minKm)
+            matches = matches.Where(d => d.ChainageKm >= minKm);
+        if (query.MaxKm is { } maxKm)
+            matches = matches.Where(d => d.ChainageKm <= maxKm);
 
         matches = (query.Alert ?? "all").ToLowerInvariant() switch
         {

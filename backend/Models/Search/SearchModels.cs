@@ -12,6 +12,8 @@ public sealed class DeviceSearchQuery
     public string? Subzone { get; set; }
     public bool? LowBattery { get; set; }
     public bool? Override { get; set; }
+    public float? MinKm { get; set; }
+    public float? MaxKm { get; set; }
     public string? Sort { get; set; }
     public int? Page { get; set; }
 }
