@@ -2,6 +2,7 @@ using backend.BackgroundServices;
 using backend.Endpoints;
 using backend.Hubs;
 using backend.Services;
+using backend.Services.Commands;
 using backend.Services.History;
 using backend.Services.Persistence;
 using backend.Services.Snapshots;
@@ -67,6 +68,7 @@ builder.Services.AddSingleton<LiveUpdates>();
 builder.Services.AddSingleton<BatchClock>();
 builder.Services.AddSingleton<MutedDevices>();
 builder.Services.AddSingleton<AcknowledgedAlerts>();
+builder.Services.AddSingleton<CommandService>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -99,6 +101,7 @@ app.MapTelemetryEndpoints();
 app.MapDiagnosticsEndpoints();
 app.MapSnapshotEndpoints();
 app.MapDashboardEndpoints();
+app.MapCommandEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",

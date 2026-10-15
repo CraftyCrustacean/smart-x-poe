@@ -1,4 +1,5 @@
 using backend.Hubs;
+using backend.Models.Commands;
 using backend.Models.Live;
 using Microsoft.AspNetCore.SignalR;
 
@@ -20,6 +21,9 @@ public sealed class LiveUpdates
 
     public void AlertRaised(AlertEvent alert) =>
         _ = SendAsync(clients => clients.AlertRaised(alert), nameof(AlertRaised));
+
+    public void CommandsChanged(CommandRecord record) =>
+        _ = SendAsync(clients => clients.CommandsChanged(record), nameof(CommandsChanged));
 
     private async Task SendAsync(Func<ITelemetryClient, Task> send, string eventName)
     {
