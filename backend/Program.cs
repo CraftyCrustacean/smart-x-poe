@@ -5,6 +5,7 @@ using backend.Services;
 using backend.Services.Commands;
 using backend.Services.History;
 using backend.Services.Persistence;
+using backend.Services.Search;
 using backend.Services.Snapshots;
 using backend.Services.State;
 using backend.Services.Telemetry;
@@ -69,6 +70,11 @@ builder.Services.AddSingleton<BatchClock>();
 builder.Services.AddSingleton<MutedDevices>();
 builder.Services.AddSingleton<AcknowledgedAlerts>();
 builder.Services.AddSingleton<CommandService>();
+builder.Services.Configure<SearchSettings>(
+    builder.Configuration.GetSection(SearchSettings.SearchSettingsName)
+);
+builder.Services.AddSingleton<DeviceSearchService>();
+builder.Services.AddSingleton<SearchClickLog>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -102,6 +108,7 @@ app.MapDiagnosticsEndpoints();
 app.MapSnapshotEndpoints();
 app.MapDashboardEndpoints();
 app.MapCommandEndpoints();
+app.MapSearchEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",

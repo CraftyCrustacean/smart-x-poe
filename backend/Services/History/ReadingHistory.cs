@@ -38,4 +38,14 @@ public sealed class ReadingHistory<TReading>
                 : [];
         }
     }
+
+    public TReading? GetLatest(string deviceId)
+    {
+        lock (_lock)
+        {
+            return _byDevice.TryGetValue(deviceId, out var timeline) && timeline.Count > 0
+                ? timeline.Values.Last()
+                : null;
+        }
+    }
 }
