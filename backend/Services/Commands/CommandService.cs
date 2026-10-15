@@ -13,12 +13,10 @@ public sealed class CommandService
 
     private sealed record UndoEntry(
         CommandRecord Record,
-        IReadOnlyDictionary<string, DeviceOverride?> PriorOverrides,
-        IReadOnlyList<string> MuteChanged,
-        IReadOnlyList<AlertKey> AcknowledgementsAdded
+        IReadOnlyDictionary<string, DeviceOverride?> PriorOverrides
     );
 
-    private readonly Stack<UndoEntry> _undo = new();
+    private readonly List<UndoEntry> _undo = new();
     private readonly LinkedList<CommandRecord> _history = new();
     private readonly Lock _lock = new();
     private long _lastId;
@@ -62,11 +60,17 @@ public sealed class CommandService
             var priors = new Dictionary<string, DeviceOverride?>();
             var muteChanged = new List<string>();
             var ackAdded = new List<AlertKey>();
+            var rebooting = 0;
 
             foreach (var device in targets)
             {
                 switch (request.Type)
                 {
+                    case CommandType.OpenValve or CommandType.CloseValve
+                        when IsRebooting(device.DeviceId, batch):
+                        rebooting++;
+                        break;
+
                     case CommandType.OpenValve or CommandType.CloseValve or CommandType.Reboot:
                         var kind = request.Type switch
                         {
@@ -113,6 +117,12 @@ public sealed class CommandService
                 _ => priors.Keys.ToList(),
             };
 
+            if (affected.Count == 0 && rebooting > 0)
+                return new(
+                    null,
+                    rebooting == 1 ? "Device is rebooting." : "All targeted devices are rebooting."
+                );
+
             if (affected.Count == 0)
                 return new(
                     null,
@@ -120,19 +130,19 @@ public sealed class CommandService
                 );
 
             _lastId = id;
-            var reversible = request.Type != CommandType.Reboot;
+            var undoable = request.Type is CommandType.OpenValve or CommandType.CloseValve;
             record = new CommandRecord(
                 id,
                 request.Type,
                 request.Target,
                 affected,
-                reversible,
+                undoable,
                 DateTime.UtcNow,
                 batch
             );
 
-            if (reversible)
-                _undo.Push(new UndoEntry(record, priors, muteChanged, ackAdded));
+            if (undoable)
+                _undo.Add(new UndoEntry(record, priors));
 
             _history.AddFirst(record);
             if (_history.Count > HistoryLimit)
@@ -149,8 +159,11 @@ public sealed class CommandService
 
         lock (_lock)
         {
-            if (!_undo.TryPop(out var entry))
+            DropExpired();
+            if (_undo.Count == 0)
                 return null;
+            var entry = _undo[^1];
+            _undo.RemoveAt(_undo.Count - 1);
             var commandId = entry.Record.Id;
 
             foreach (var (deviceId, prior) in entry.PriorOverrides)
@@ -161,17 +174,6 @@ public sealed class CommandService
                     out _
                 );
             }
-
-            foreach (var deviceId in entry.MuteChanged)
-            {
-                if (entry.Record.Type == CommandType.Mute)
-                    _muted.Remove(deviceId);
-                else
-                    _muted.TryAdd(deviceId);
-            }
-
-            foreach (var key in entry.AcknowledgementsAdded)
-                _acknowledged.Remove(key);
 
             undone = entry.Record with { UndoneAtUtc = DateTime.UtcNow };
             for (var node = _history.First; node != null; node = node.Next)
@@ -192,9 +194,21 @@ public sealed class CommandService
     {
         lock (_lock)
         {
-            return (_history.ToList(), _undo.TryPeek(out var top) ? top.Record.Id : null);
+            DropExpired();
+            return (_history.ToList(), _undo.Count > 0 ? _undo[^1].Record.Id : null);
         }
     }
+
+    private void DropExpired()
+    {
+        var now = _clock.Current;
+        _undo.RemoveAll(e => e.Record.IssuedAtBatch + GraceBatches <= now);
+    }
+
+    private bool IsRebooting(string deviceId, long batch) =>
+        _registry.TryGet(deviceId, out var state)
+        && state.Override is { Kind: OverrideKind.Rebooting } o
+        && o.ValidUntilBatch > batch;
 
     private IReadOnlyList<DeviceState> ResolveTargets(CommandRequest request)
     {

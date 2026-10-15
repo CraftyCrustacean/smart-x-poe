@@ -1,9 +1,23 @@
-import { useEffect, useState } from "react";
-import { useDeviceLive } from "../../api/devices";
-import { formatAgo, metricLabel } from "../../lib/format";
+import { TriangleAlert } from "lucide-react";
+import { useDeviceLive, useDeviceReadings } from "../../api/devices";
+import { metricLabel } from "../../lib/format";
 import { ErrorNotice, Loading, Skeleton } from "../dashboard/LoadState";
+import TimeAgo from "../TimeAgo";
 
-function statusOf({ state, offline }) {
+const OVERRIDE_TEXT = {
+  ValveOpen: "Valve forced open",
+  ValveClosed: "Valve forced closed",
+};
+
+const batchesText = (n) => `${n} more batch${n === 1 ? "" : "es"}`;
+
+function statusOf({ state, offline }, rebootBatchesLeft) {
+  if (rebootBatchesLeft != null)
+    return {
+      label: "Rebooting",
+      detail: batchesText(rebootBatchesLeft),
+      dot: "bg-amber-500",
+    };
   if (state.lastSeenUtc == null)
     return { label: "Never reported", dot: "bg-slate-400" };
   if (offline) return { label: "Offline", dot: "bg-red-500" };
@@ -19,23 +33,10 @@ function Field({ label, children }) {
   );
 }
 
-function TimeAgo({ iso }) {
-  const [, setTick] = useState(0);
 
-  useEffect(() => {
-    const id = setInterval(() => setTick((t) => t + 1), 1000);
-    return () => clearInterval(id);
-  }, []);
-
-  return (
-    <time dateTime={iso} title={new Date(iso).toLocaleString("en-GB")}>
-      {formatAgo(iso)}
-    </time>
-  );
-}
-
-export default function DeviceLivePanel({ deviceId }) {
+export default function DeviceLivePanel({ deviceId, category }) {
   const { data, isLoading, error, refetch } = useDeviceLive(deviceId);
+  const { data: readings = [] } = useDeviceReadings(deviceId);
 
   if (isLoading)
     return (
@@ -52,44 +53,96 @@ export default function DeviceLivePanel({ deviceId }) {
       />
     );
 
-  const status = statusOf(data);
   const { state, activeAlerts } = data;
+  const { activeOverride, currentBatch, acknowledgedAlerts } = data;
+  const batchesLeft = activeOverride
+    ? activeOverride.validUntilBatch - currentBatch
+    : 0;
+  const rebooting = activeOverride?.kind === "Rebooting";
+  const valveOverride = activeOverride && !rebooting ? activeOverride : null;
+  const status = statusOf(data, rebooting ? batchesLeft : null);
+  const ackedCount = activeAlerts.filter((m) =>
+    acknowledgedAlerts.includes(m),
+  ).length;
+  const alertsLabel =
+    ackedCount === 0
+      ? "Active critical alerts"
+      : ackedCount === activeAlerts.length
+        ? "Active critical alerts (acknowledged)"
+        : `Active critical alerts (${ackedCount} acknowledged)`;
+  const latestValve = readings.at(-1)?.valve_open;
 
   return (
-    <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-      <Field label="Live status">
-        <span className="inline-flex items-center gap-2">
-          <span
-            className={`h-2.5 w-2.5 rounded-full ${status.dot}`}
-            aria-hidden="true"
-          />
-          {status.label}
-        </span>
-      </Field>
-      <Field label="Last seen">
-        {state.lastSeenUtc ? <TimeAgo iso={state.lastSeenUtc} /> : "—"}
-      </Field>
-      <Field label="Battery">
-        <span className="tabular-nums">
-          {state.batteryPct != null ? `${state.batteryPct}%` : "—"}
-        </span>
-      </Field>
-      <Field label="Active critical alerts">
-        {activeAlerts.length === 0 ? (
-          <span className="text-slate-500">None</span>
-        ) : (
-          <ul className="flex flex-wrap gap-1.5">
-            {activeAlerts.map((m) => (
-              <li
-                key={m}
-                className="inline-flex items-center gap-1 rounded-full bg-red-50 px-2 py-0.5 text-sm text-red-700"
-              >
-                {metricLabel(m)}
-              </li>
-            ))}
-          </ul>
+    <>
+      <dl className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        <Field label="Live status">
+          <span className="inline-flex items-center gap-2">
+            <span
+              className={`h-2.5 w-2.5 rounded-full ${status.dot}`}
+              aria-hidden="true"
+            />
+            {status.label}
+          </span>
+          <span className="block h-4 pl-4.5 text-xs text-slate-500">
+            {status.detail}
+          </span>
+        </Field>
+        <Field label="Last seen">
+          {state.lastSeenUtc ? <TimeAgo iso={state.lastSeenUtc} /> : "—"}
+        </Field>
+        <Field label="Battery">
+          <span className="tabular-nums">
+            {state.batteryPct != null ? `${state.batteryPct}%` : "—"}
+          </span>
+        </Field>
+        {category === "Actuator" && (
+          <Field label="Valve">
+            {valveOverride ? (
+              <span>
+                {valveOverride.kind === "ValveOpen" ? "Open" : "Closed"}{" "}
+                <span className="text-xs text-orange-700">(override)</span>
+              </span>
+            ) : latestValve == null ? (
+              "—"
+            ) : latestValve ? (
+              "Open"
+            ) : (
+              "Closed"
+            )}
+          </Field>
         )}
-      </Field>
-    </dl>
+        <Field label={alertsLabel}>
+          {activeAlerts.length === 0 ? (
+            <span className="text-slate-500">None</span>
+          ) : (
+            <ul className="flex flex-wrap gap-1.5">
+              {activeAlerts.map((m) => {
+                const acked = acknowledgedAlerts.includes(m);
+                return (
+                  <li
+                    key={m}
+                    className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm ${
+                      acked ? "bg-slate-100 text-slate-600" : "bg-red-50 text-red-700"
+                    }`}
+                  >
+                    {!acked && <TriangleAlert size={12} aria-hidden="true" />}
+                    {metricLabel(m)}
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </Field>
+      </dl>
+      {category === "Actuator" && (
+        <div className="mt-4 h-7">
+          {valveOverride && (
+            <p className="inline-block rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-800">
+              {OVERRIDE_TEXT[valveOverride.kind]} · {batchesText(batchesLeft)}
+            </p>
+          )}
+        </div>
+      )}
+    </>
   );
 }

@@ -1,5 +1,6 @@
 using backend.Models.Commands;
 using backend.Services.Commands;
+using backend.Services.State;
 
 namespace backend.Endpoints;
 
@@ -33,10 +34,18 @@ public static class CommandEndpoints
         // GET /api/commands
         group.MapGet(
             "/",
-            (CommandService commands) =>
+            (CommandService commands, BatchClock clock) =>
             {
                 var (history, undoableId) = commands.GetHistory();
-                return Results.Ok(new { undoableId, history });
+                return Results.Ok(
+                    new
+                    {
+                        undoableId,
+                        currentBatch = clock.Current,
+                        graceBatches = CommandService.GraceBatches,
+                        history,
+                    }
+                );
             }
         );
     }

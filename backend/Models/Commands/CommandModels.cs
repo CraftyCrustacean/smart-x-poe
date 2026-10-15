@@ -22,7 +22,7 @@ public sealed record CommandRecord(
     CommandType Type,
     CommandTarget Target,
     IReadOnlyList<string> DeviceIds,
-    bool Reversible,
+    bool Undoable,
     DateTime IssuedAtUtc,
     long IssuedAtBatch
 )

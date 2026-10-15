@@ -28,6 +28,7 @@ public class TelemetryProcessor
     private readonly LiveUpdates _liveUpdates;
     private readonly MutedDevices _muted;
     private readonly AcknowledgedAlerts _acknowledged;
+    private readonly BatchClock _clock;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -44,7 +45,8 @@ public class TelemetryProcessor
         ActiveAlerts activeAlerts,
         LiveUpdates liveUpdates,
         MutedDevices muted,
-        AcknowledgedAlerts acknowledged
+        AcknowledgedAlerts acknowledged,
+        BatchClock clock
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -62,6 +64,7 @@ public class TelemetryProcessor
         _liveUpdates = liveUpdates;
         _acknowledged = acknowledged;
         _muted = muted;
+        _clock = clock;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -153,6 +156,14 @@ public class TelemetryProcessor
         }
 
         var isLatest = result == TelemetryUpdateResult.Applied;
+
+        if (
+            reading is ActuatorReading valve
+            && _deviceRegistry.TryGet(valve.DeviceId, out var current)
+            && current.Override is { Kind: OverrideKind.ValveOpen or OverrideKind.ValveClosed } o
+            && o.ValidUntilBatch > _clock.Current
+        )
+            valve.ValveOpen = o.Kind == OverrideKind.ValveOpen;
 
         switch (reading)
         {

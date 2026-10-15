@@ -15,6 +15,7 @@ import {
   pickStat,
   zoneColour,
 } from "../../lib/format";
+import SubzoneCommandMenu from "../commands/SubzoneCommandMenu";
 import ChartTooltip from "./ChartTooltip";
 import { ErrorNotice, Loading, Skeleton } from "./LoadState";
 
@@ -130,7 +131,7 @@ export default function SubzoneMetricGrid({ zone, metric, stat, range }) {
                 />
               </AreaChart>
             </ResponsiveContainer>
-            {/* TODO: Subzone commands */}
+            <SubzoneCommandMenu zone={zone} subzone={s.subzone} />
           </article>
         );
       })}

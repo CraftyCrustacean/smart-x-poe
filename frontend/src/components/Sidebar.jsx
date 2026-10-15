@@ -196,7 +196,7 @@ function Sidebar() {
             <ModuleSection
               id="command-stream"
               title="Real-Time Command Stream and History"
-              paths={["/command-stream"]}
+              paths={["/command-stream", "/command-history"]}
             >
               <NavItem
                 to="/command-stream"

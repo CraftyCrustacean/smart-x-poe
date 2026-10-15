@@ -93,7 +93,7 @@ export const isPastThreshold = (value, threshold) =>
     : value > threshold.critical);
 
 export const formatAgo = (iso) => {
-  const seconds = Math.max(0, Math.round((Date.now() - new Date(iso)) / 1000));
+  const seconds = Math.max(0, Math.floor(Date.now() / 1000) - Math.floor(new Date(iso) / 1000));
   if (seconds < 60) return `${seconds}s ago`;
   if (seconds < 3600) return `${Math.floor(seconds / 60)} min ago`;
   return `${Math.floor(seconds / 3600)} h ago`;

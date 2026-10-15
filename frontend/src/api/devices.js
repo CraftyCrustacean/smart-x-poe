@@ -7,6 +7,7 @@ export const useDeviceLive = (deviceId) =>
     queryFn: () =>
       getJson(`/api/devices/${encodeURIComponent(deviceId)}/state`),
     staleTime: Infinity,
+    enabled: Boolean(deviceId),
   });
 
 export const useDeviceReadings = (deviceId) =>

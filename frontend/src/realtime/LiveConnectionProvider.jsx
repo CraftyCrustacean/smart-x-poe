@@ -26,11 +26,17 @@ export function LiveConnectionProvider({ children }) {
       queryClient.setQueryData(["dashboardSummary"], summary);
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
       queryClient.invalidateQueries({ queryKey: ["device"] });
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
     });
 
     connection.on("AlertRaised", (alert) => {
       setRecentAlerts((old) => [alert, ...old].slice(0, RECENT_ALERT_LIMIT));
       setUnreadAlerts((n) => Math.min(n + 1, RECENT_ALERT_LIMIT));
+    });
+
+    connection.on("CommandsChanged", () => {
+      queryClient.invalidateQueries({ queryKey: ["commands"] });
+      queryClient.invalidateQueries({ queryKey: ["device"] });
     });
 
     const start = async () => {

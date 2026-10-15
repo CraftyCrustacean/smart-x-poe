@@ -1,18 +1,19 @@
-import { useParams } from "react-router-dom";
 import { useRef } from "react";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
-import { Link } from "react-router-dom";
 import { useDeviceFiles, useDevices } from "../api/devices";
-import { API_BASE } from "../lib/format";
+import { API_BASE, zoneLabel } from "../lib/format";
 import CardBoundary from "../components/dashboard/CardBoundary";
+import DeviceCommands from "../components/device/DeviceCommands";
 import DeviceLivePanel from "../components/device/DeviceLivePanel";
+import DeviceRecentCommands from "../components/device/DeviceRecentCommands";
 import DeviceTimeline from "../components/device/DeviceTimeline";
 import RecentReadingsTable from "../components/device/RecentReadingsTable";
 
 function DeviceDetails() {
   const navigate = useNavigate();
+  const location = useLocation();
   const { deviceId } = useParams();
 
   const { data, isLoading, error } = useDevices();
@@ -40,8 +41,8 @@ function DeviceDetails() {
       });
 
       if (!res.ok) {
-        const errorBody = await res.json();
-        throw new Error(errorBody.message || "Upload failed");
+        const errorBody = await res.json().catch(() => null);
+        throw new Error(errorBody?.message || `Upload failed (${res.status})`);
       }
 
       return res.json();
@@ -91,17 +92,23 @@ function DeviceDetails() {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files[0];
+                e.target.value = "";
                 if (file) uploadMutation.mutate(file);
               }}
             />
             <button
+              type="button"
               onClick={() => fileInputRef.current.click()}
-              className="px-3 py-1.5 rounded-md border border-orange-200 bg-white text-sm text-slate-600 hover:bg-orange-100 transition-colors"
+              disabled={uploadMutation.isPending}
+              className="px-3 py-1.5 rounded-md border border-orange-200 bg-white text-sm text-slate-600 hover:bg-orange-100 transition-colors disabled:opacity-60"
             >
-              Attach Files
+              {uploadMutation.isPending ? "Uploading…" : "Attach Files"}
             </button>
             <button
-              onClick={() => navigate(-1)}
+              type="button"
+              onClick={() =>
+                location.key === "default" ? navigate("/devices") : navigate(-1)
+              }
               className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
             >
               Back
@@ -130,11 +137,11 @@ function DeviceDetails() {
               <span className="text-slate-900">{device.firmware_version}</span>
             </div>
             <div className="flex">
-              <span className="w-40 text-slate-500">Pipe Product</span>
+              <span className="w-40 text-slate-500">Product</span>
               <span className="text-slate-900">{device.product_type}</span>
             </div>
             <div className="flex">
-              <span className="w-40 text-slate-500">Installment Date</span>
+              <span className="w-40 text-slate-500">Installation Date</span>
               <span className="text-slate-900">
                 {new Date(device.provisioned_at).toLocaleString("en-GB", {
                   day: "2-digit",
@@ -186,7 +193,7 @@ function DeviceDetails() {
               </div>
               <div className="flex">
                 <span className="w-40 text-slate-500">Zone</span>
-                <span className="text-slate-900">{device.topology.zone}</span>
+                <span className="text-slate-900">{zoneLabel(device.topology.zone)}</span>
               </div>
               <div className="flex">
                 <span className="w-40 text-slate-500">Subzone</span>
@@ -239,12 +246,23 @@ function DeviceDetails() {
 
       <div className="mt-6 space-y-6">
         <section className="bg-white border border-slate-300 rounded-lg p-6">
-          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
-            Live
-          </h3>
-          <CardBoundary what="live status">
-            <DeviceLivePanel deviceId={deviceId} />
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-3 pb-2 border-b border-slate-200">
+            <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide">
+              Live
+            </h3>
+            <CardBoundary what="commands" resetKey={deviceId}>
+              <DeviceCommands deviceId={deviceId} category={device.category} />
+            </CardBoundary>
+          </div>
+          <CardBoundary what="live status" resetKey={deviceId}>
+            <DeviceLivePanel deviceId={deviceId} category={device.category} />
           </CardBoundary>
+          <div className="mt-4 pt-4 border-t border-slate-200">
+            <h4 className="text-sm text-slate-500 mb-2">Recent commands</h4>
+            <CardBoundary what="recent commands" resetKey={deviceId}>
+              <DeviceRecentCommands deviceId={deviceId} />
+            </CardBoundary>
+          </div>
         </section>
 
         <section className="bg-white border border-slate-300 rounded-lg p-6">
