@@ -12,6 +12,7 @@ public sealed record DeviceState
     public required float ChainageKm { get; init; }
     public DateTime? LastSeenUtc { get; init; }
     public int? BatteryPct { get; init; }
+    public DeviceOverride? Override { get; init; }
 
     public static DeviceState FromProvision(ProvisionData data) =>
         new()

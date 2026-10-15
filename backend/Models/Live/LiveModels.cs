@@ -8,7 +8,11 @@ public sealed record CategoryCount(DeviceCategory Category, int Total, int Offli
 public sealed record DeviceLiveView(
     DeviceState State,
     bool Offline,
-    IReadOnlyList<string> ActiveAlerts
+    IReadOnlyList<string> ActiveAlerts,
+    IReadOnlyList<string> AcknowledgedAlerts,
+    bool Muted,
+    DeviceOverride? ActiveOverride,
+    long CurrentBatch
 );
 
 public sealed record DashboardSummary(

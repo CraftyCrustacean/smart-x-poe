@@ -117,7 +117,10 @@ public static class DeviceEndpoints
                 string deviceId,
                 DeviceRegistry registry,
                 DisconnectedDevices disconnected,
-                ActiveAlerts alerts
+                ActiveAlerts alerts,
+                AcknowledgedAlerts acknowledged,
+                MutedDevices muted,
+                BatchClock clock
             ) =>
             {
                 if (!registry.TryGet(deviceId, out var state))
@@ -128,9 +131,22 @@ public static class DeviceEndpoints
                 var activeAlerts = ThresholdEvaluator
                     .Metrics.Where(m => alerts.Contains(new AlertKey(deviceId, m)))
                     .ToList();
+                var acknowledgedAlerts = activeAlerts
+                    .Where(m => acknowledged.Contains(new AlertKey(deviceId, m)))
+                    .ToList();
+                var now = clock.Current;
+                var activeOverride = state.Override is { } o && o.ValidUntilBatch > now ? o : null;
 
                 return Results.Ok(
-                    new DeviceLiveView(state, disconnected.Contains(deviceId), activeAlerts)
+                    new DeviceLiveView(
+                        state,
+                        disconnected.Contains(deviceId),
+                        activeAlerts,
+                        acknowledgedAlerts,
+                        muted.Contains(deviceId),
+                        activeOverride,
+                        now
+                    )
                 );
             }
         );

@@ -1,6 +1,7 @@
 using backend.Models.Telemetry;
 using backend.Services;
 using backend.Services.Snapshots;
+using backend.Services.State;
 using backend.Services.Telemetry;
 
 namespace backend.BackgroundServices;
@@ -13,6 +14,7 @@ public sealed class BatchCloseHandler : IHostedService
     private readonly SnapshotBuilder _snapshotBuilder;
     private readonly DashboardSummaryService _summaryService;
     private readonly LiveUpdates _liveUpdates;
+    private readonly BatchClock _batchClock;
 
     public BatchCloseHandler(
         TelemetryBatcher batcher,
@@ -20,7 +22,8 @@ public sealed class BatchCloseHandler : IHostedService
         ILogger<BatchCloseHandler> logger,
         SnapshotBuilder snapshotBuilder,
         DashboardSummaryService summaryService,
-        LiveUpdates liveUpdates
+        LiveUpdates liveUpdates,
+        BatchClock batchClock
     )
     {
         _batcher = batcher;
@@ -29,6 +32,7 @@ public sealed class BatchCloseHandler : IHostedService
         _snapshotBuilder = snapshotBuilder;
         _summaryService = summaryService;
         _liveUpdates = liveUpdates;
+        _batchClock = batchClock;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -45,6 +49,8 @@ public sealed class BatchCloseHandler : IHostedService
 
     private void OnBatchClosed(TelemetryBatch batch)
     {
+        _batchClock.Advance();
+
         var disconnects = _disconnectDetector.Detect(batch);
         var scopes = _snapshotBuilder.Build(batch);
         _summaryService.RecordBatch(batch);

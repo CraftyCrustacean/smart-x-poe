@@ -26,6 +26,8 @@ public class TelemetryProcessor
     private readonly ThresholdEvaluator _thresholdEvaluator;
     private readonly ActiveAlerts _activeAlerts;
     private readonly LiveUpdates _liveUpdates;
+    private readonly MutedDevices _muted;
+    private readonly AcknowledgedAlerts _acknowledged;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -40,7 +42,9 @@ public class TelemetryProcessor
         ReadingHistory<FlowRateReading> flowRateTimeline,
         ThresholdEvaluator thresholdEvaluator,
         ActiveAlerts activeAlerts,
-        LiveUpdates liveUpdates
+        LiveUpdates liveUpdates,
+        MutedDevices muted,
+        AcknowledgedAlerts acknowledged
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -56,6 +60,8 @@ public class TelemetryProcessor
         _thresholdEvaluator = thresholdEvaluator;
         _activeAlerts = activeAlerts;
         _liveUpdates = liveUpdates;
+        _acknowledged = acknowledged;
+        _muted = muted;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -179,7 +185,10 @@ public class TelemetryProcessor
                             check.Severity
                         );
 
-                        if (_deviceRegistry.TryGet(reading.DeviceId, out var device))
+                        if (
+                            !_muted.Contains(reading.DeviceId)
+                            && _deviceRegistry.TryGet(reading.DeviceId, out var device)
+                        )
                         {
                             _liveUpdates.AlertRaised(
                                 new AlertEvent(
@@ -198,6 +207,8 @@ public class TelemetryProcessor
                 }
                 else if (_activeAlerts.Remove(key))
                 {
+                    _acknowledged.Remove(key);
+
                     _logger.LogInformation(
                         "Alert cleared: {DeviceId} {Metric}.",
                         reading.DeviceId,

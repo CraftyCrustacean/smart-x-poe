@@ -72,3 +72,7 @@ public abstract class LockedSet<T>
 public sealed class DisconnectedDevices : LockedSet<string> { }
 
 public sealed class ActiveAlerts : LockedSet<AlertKey> { }
+
+public sealed class MutedDevices : LockedSet<string> { }
+
+public sealed class AcknowledgedAlerts : LockedSet<AlertKey> { }

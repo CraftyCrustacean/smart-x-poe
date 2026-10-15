@@ -64,6 +64,9 @@ builder.Services.AddSingleton<SnapshotBuilder>();
 builder.Services.AddSingleton<DashboardSummaryService>();
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<LiveUpdates>();
+builder.Services.AddSingleton<BatchClock>();
+builder.Services.AddSingleton<MutedDevices>();
+builder.Services.AddSingleton<AcknowledgedAlerts>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"

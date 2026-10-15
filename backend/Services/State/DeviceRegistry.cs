@@ -55,4 +55,26 @@ public class DeviceRegistry
                 return TelemetryUpdateResult.Applied;
         }
     }
+
+    public bool TryApply(
+        string deviceId,
+        Func<DeviceState, DeviceState> change,
+        out DeviceState? before
+    )
+    {
+        while (true)
+        {
+            if (!_devices.TryGetValue(deviceId, out var current))
+            {
+                before = null;
+                return false;
+            }
+
+            if (_devices.TryUpdate(deviceId, change(current), current))
+            {
+                before = current;
+                return true;
+            }
+        }
+    }
 }
