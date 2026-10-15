@@ -25,7 +25,9 @@ function Highlight({ id, q }) {
   return (
     <>
       {id.slice(0, start)}
-      <mark className="bg-orange-100 text-slate-900 rounded-sm">{id.slice(start, end)}</mark>
+      <mark className="bg-orange-100 text-slate-900 rounded-sm">
+        {id.slice(start, end)}
+      </mark>
       {id.slice(end)}
     </>
   );
@@ -92,7 +94,8 @@ export default function HeaderSearch() {
     setActive(-1);
     clearTimers();
     suggestTimer.current = setTimeout(() => setSuggestQ(value), 150);
-    if (onSearchPage) queryTimer.current = setTimeout(() => update({ q: value }), 300);
+    if (onSearchPage)
+      queryTimer.current = setTimeout(() => update({ q: value }), 300);
   };
 
   const showAll = () => {
@@ -118,7 +121,12 @@ export default function HeaderSearch() {
     } else if (e.key === "ArrowUp" && showList) {
       e.preventDefault();
       setActive((a) => Math.max(a - 1, -1));
-    } else if (e.key === "Enter" && showList && active >= 0 && active < suggestions.length) {
+    } else if (
+      e.key === "Enter" &&
+      showList &&
+      active >= 0 &&
+      active < suggestions.length
+    ) {
       e.preventDefault();
       openDevice(suggestions[active].deviceId);
     } else if (e.key === "Escape" && showList) {
@@ -127,7 +135,10 @@ export default function HeaderSearch() {
     }
   };
 
-  const filterCount = activeFilters(params, FILTER_KEYS.filter((k) => k !== "q")).length;
+  const filterCount = activeFilters(
+    params,
+    FILTER_KEYS.filter((k) => k !== "q"),
+  ).length;
   const optionId = (i) => `${listId}-${i}`;
 
   return (
@@ -141,7 +152,11 @@ export default function HeaderSearch() {
           }}
           className="flex items-center gap-2 bg-white rounded-full border border-slate-300 px-3 py-2 w-80 focus-within:border-orange-300"
         >
-          <Search size={18} className="shrink-0 text-slate-400" aria-hidden="true" />
+          <Search
+            size={18}
+            className="shrink-0 text-slate-400"
+            aria-hidden="true"
+          />
           <label htmlFor="header-search" className="sr-only">
             Search devices by ID or MAC
           </label>
@@ -153,7 +168,9 @@ export default function HeaderSearch() {
             aria-autocomplete="list"
             aria-expanded={showList}
             aria-controls={listId}
-            aria-activedescendant={showList && active >= 0 ? optionId(active) : undefined}
+            aria-activedescendant={
+              showList && active >= 0 ? optionId(active) : undefined
+            }
             value={text}
             onChange={onChange}
             onKeyDown={onKeyDown}
@@ -171,7 +188,9 @@ export default function HeaderSearch() {
             className="absolute left-0 top-full z-40 mt-2 w-96 overflow-hidden rounded-lg border border-slate-300 bg-white py-1 shadow-lg"
           >
             {suggestions.length === 0 && !isFetching && (
-              <li className="px-3 py-2 text-sm text-slate-500">No matching devices</li>
+              <li className="px-3 py-2 text-sm text-slate-500">
+                No matching devices
+              </li>
             )}
             {suggestions.map((s, i) => (
               <li
@@ -189,7 +208,11 @@ export default function HeaderSearch() {
                 <span
                   aria-hidden="true"
                   className={`h-2 w-2 shrink-0 rounded-full ${
-                    s.inAlert ? "bg-red-500" : s.offline ? "bg-slate-300" : "bg-green-500"
+                    s.inAlert
+                      ? "bg-red-500"
+                      : s.offline
+                        ? "bg-slate-300"
+                        : "bg-green-500"
                   }`}
                 />
                 <span className="min-w-0 flex-1">
@@ -214,7 +237,9 @@ export default function HeaderSearch() {
                 active === suggestions.length ? "bg-orange-50" : ""
               }`}
             >
-              <span className="truncate">See all results for “{text.trim()}”</span>
+              <span className="truncate">
+                See all results for “{text.trim()}”
+              </span>
               <ArrowRight size={14} aria-hidden="true" className="shrink-0" />
             </li>
           </ul>
@@ -234,11 +259,10 @@ export default function HeaderSearch() {
           className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-2 text-sm transition-colors ${
             filtersOpen || filterCount
               ? "border-orange-300 bg-orange-100 text-slate-900"
-              : "border-slate-300 bg-white text-slate-600 hover:bg-orange-50"
+              : "border-transparent bg-white text-slate-600 hover:bg-orange-50"
           }`}
         >
           <Funnel size={16} strokeWidth={1.5} aria-hidden="true" />
-          Filters
           {filterCount > 0 && (
             <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-orange-500 px-1 text-xs font-semibold text-white">
               <span className="sr-only">, </span>

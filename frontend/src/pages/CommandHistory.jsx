@@ -140,7 +140,7 @@ function CommandHistory() {
       ) : (
         <>
           <section className="bg-white border border-slate-300 rounded-lg p-4 space-y-3">
-            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-slate-200">
+            <div className="flex flex-wrap items-center justify-between gap-3 pb-2 border-b border-transparent">
               <div>
                 <h2 className={headingClass}>Valve overrides</h2>
                 <p className="text-sm text-slate-500">
@@ -148,7 +148,10 @@ function CommandHistory() {
                   sequence.
                 </p>
               </div>
-              <span title={next ? undefined : "Nothing to undo"} className="inline-flex">
+              <span
+                title={next ? undefined : "Nothing to undo"}
+                className="inline-flex"
+              >
                 <button
                   type="button"
                   onClick={runUndo}
