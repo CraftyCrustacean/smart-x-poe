@@ -1,20 +1,15 @@
 import { useQuery } from "@tanstack/react-query";
+import { getJson } from "../api/dashboard";
 
 function FeatureDemo() {
   const { data: validation, isLoading: validationLoading } = useQuery({
     queryKey: ["feature-validate"],
-    queryFn: () =>
-      fetch("http://localhost:8080/api/topology/validate").then((res) =>
-        res.json(),
-      ),
+    queryFn: () => getJson("/api/topology/validate"),
   });
 
   const { data: flowRates, isLoading: flowRatesLoading } = useQuery({
     queryKey: ["feature-flowrate"],
-    queryFn: () =>
-      fetch("http://localhost:8080/api/topology/flowrate").then((res) =>
-        res.json(),
-      ),
+    queryFn: () => getJson("/api/topology/flowrate"),
   });
 
   return (

@@ -1,5 +1,6 @@
-import { Bell, Search } from "lucide-react";
+import { Search } from "lucide-react";
 import { useLive } from "../realtime/liveContext";
+import NotificationBell from "./NotificationBell";
 
 function Header() {
   return (
@@ -15,9 +16,7 @@ function Header() {
 
       <div className="flex items-center gap-4">
         <LiveIndicator />
-        <button className="relative">
-          <Bell size={20} className="text-slate-500" />
-        </button>
+        <NotificationBell />
       </div>
     </header>
   );

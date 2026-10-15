@@ -1,6 +1,6 @@
 import { Fragment, useState } from "react";
-import { Link } from "react-router-dom";
-import { ChevronRight, TriangleAlert } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
 import { useLatestSnapshots } from "../../api/dashboard";
 import {
   formatValue,
@@ -28,16 +28,23 @@ function MetricCell({ metric, summary }) {
 }
 
 function BreachList({ id, breaches }) {
+  const navigate = useNavigate();
+
   return (
     <ul id={id} className="divide-y divide-red-100">
       {breaches.map((b) => (
         <li
           key={`${b.deviceId}-${b.metric}`}
-          className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5 py-1.5"
+          onClick={(e) => {
+            if (e.target.closest("a") || window.getSelection()?.toString())
+              return;
+            navigate(`/devices/${b.deviceId}`);
+          }}
+          className="group -mx-2 flex cursor-pointer flex-wrap items-baseline gap-x-3 gap-y-0.5 px-2 py-1.5 transition-colors hover:bg-red-100/70 motion-reduce:transition-none"
         >
           <Link
             to={`/devices/${b.deviceId}`}
-            className="font-medium text-slate-900 hover:underline"
+            className="font-medium text-slate-900 group-hover:underline"
           >
             {b.deviceId}
           </Link>
@@ -203,10 +210,7 @@ export default function ScopeSummaryTable({ zone, onSelectZone }) {
                   ))}
                   <td className="px-3 py-2 tabular-nums">
                     {breaching > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-red-700">
-                        <TriangleAlert size={14} aria-hidden="true" />{" "}
-                        {breaching}
-                      </span>
+                      <span className="text-red-700">{breaching}</span>
                     ) : (
                       <span className="text-slate-500">0</span>
                     )}

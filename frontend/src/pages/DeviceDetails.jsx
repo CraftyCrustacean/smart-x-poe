@@ -1,32 +1,29 @@
 import { useParams } from "react-router-dom";
-import { useQuery } from "@tanstack/react-query";
 import { useRef } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useNavigate } from "react-router-dom";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
+import { useDeviceFiles, useDevices } from "../api/devices";
+import { API_BASE } from "../lib/format";
+import CardBoundary from "../components/dashboard/CardBoundary";
+import DeviceLivePanel from "../components/device/DeviceLivePanel";
+import DeviceTimeline from "../components/device/DeviceTimeline";
+import RecentReadingsTable from "../components/device/RecentReadingsTable";
 
 function DeviceDetails() {
   const navigate = useNavigate();
   const { deviceId } = useParams();
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["devices"],
-    queryFn: () =>
-      fetch("http://localhost:8080/api/devices").then((res) => res.json()),
-  });
+  const { data, isLoading, error } = useDevices();
 
   const {
     data: files,
     isLoading: filesLoading,
     error: filesError,
-  } = useQuery({
-    queryKey: ["files", deviceId],
-    queryFn: () =>
-      fetch(`http://localhost:8080/api/devices/${deviceId}/files`).then((res) =>
-        res.json(),
-      ),
-  });
+  } = useDeviceFiles(deviceId);
+
+  const filesUrl = `${API_BASE}/api/devices/${encodeURIComponent(deviceId)}/files`;
 
   const device = data?.find((d) => d.device_id === deviceId);
 
@@ -37,13 +34,10 @@ function DeviceDetails() {
     mutationFn: async (file) => {
       const formData = new FormData();
       formData.append("file", file);
-      const res = await fetch(
-        `http://localhost:8080/api/devices/${deviceId}/files`,
-        {
-          method: "POST",
-          body: formData,
-        },
-      );
+      const res = await fetch(filesUrl, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!res.ok) {
         const errorBody = await res.json();
@@ -82,7 +76,7 @@ function DeviceDetails() {
     <div>
       <h1 className="text-2xl font-bold text-slate-900">Device Information</h1>
       <p className="text-slate-500 mb-6">
-        View information, attach files, and edit device information
+        View information, live readings, and attach files
       </p>
 
       <div className="bg-white border border-slate-300 rounded-lg p-6">
@@ -107,10 +101,10 @@ function DeviceDetails() {
               Attach Files
             </button>
             <button
-              onClick={() => toast("Feature coming maybe.")}
-              className="px-3 py-1.5 rounded-md border: border-1 border-orange-200 bg-white text-sm text-slate-600 hover:bg-orange-100 transition-colors"
+              onClick={() => navigate(-1)}
+              className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
             >
-              Edit
+              Back
             </button>
           </div>
         </div>
@@ -118,7 +112,7 @@ function DeviceDetails() {
           <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
             Details
           </h3>
-          <div className="grid grid-cols-2 gap-x-8 gap-y-2 mb-6">
+          <div className="grid sm:grid-cols-2 gap-x-8 gap-y-2 mb-6">
             <div className="flex">
               <span className="w-40 text-slate-500">MAC Address</span>
               <span className="text-slate-900">{device.mac_address}</span>
@@ -128,7 +122,7 @@ function DeviceDetails() {
               <span className="text-slate-900">{device.category}</span>
             </div>
             <div className="flex">
-              <span className="w-40 text-slate-500">Status</span>
+              <span className="w-40 text-slate-500">Registration Status</span>
               <span className="text-slate-900">{device.status}</span>
             </div>
             <div className="flex">
@@ -154,7 +148,7 @@ function DeviceDetails() {
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-2 gap-8">
+        <div className="grid sm:grid-cols-2 gap-x-8">
           <div>
             <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
               Location
@@ -229,7 +223,7 @@ function DeviceDetails() {
               {files.map((file) => (
                 <li key={file.fileId}>
                   <a
-                    href={`http://localhost:8080/api/devices/${deviceId}/files/${file.fileId}`}
+                    href={`${filesUrl}/${file.fileId}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="flex items-center gap-2 text-orange-700 hover:underline text-sm"
@@ -241,15 +235,42 @@ function DeviceDetails() {
             </ul>
           )}
         </div>
+      </div>
 
-        <div className="flex justify-end mt-6 pt-6">
-          <button
-            onClick={() => navigate(-1)}
-            className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
-          >
-            Back
-          </button>
-        </div>
+      <div className="mt-6 space-y-6">
+        <section className="bg-white border border-slate-300 rounded-lg p-6">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
+            Live
+          </h3>
+          <CardBoundary what="live status">
+            <DeviceLivePanel deviceId={deviceId} />
+          </CardBoundary>
+        </section>
+
+        <section className="bg-white border border-slate-300 rounded-lg p-6">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
+            Timeline: last 30 simulated days
+          </h3>
+          <CardBoundary what="timeline" resetKey={deviceId}>
+            <DeviceTimeline
+              deviceId={deviceId}
+              category={device.category}
+              zone={device.topology.zone}
+            />
+          </CardBoundary>
+        </section>
+
+        <section className="bg-white border border-slate-300 rounded-lg p-6">
+          <h3 className="text-sm font-bold text-slate-500 uppercase tracking-wide mb-3 pb-2 border-b border-slate-200">
+            Recent readings
+          </h3>
+          <CardBoundary what="readings table" resetKey={deviceId}>
+            <RecentReadingsTable
+              deviceId={deviceId}
+              category={device.category}
+            />
+          </CardBoundary>
+        </section>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { useMemo, useState, useRef, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
 import { Funnel } from "lucide-react";
+import { getJson } from "../api/dashboard";
+import { useDevices } from "../api/devices";
 
 function DeviceList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -19,18 +21,11 @@ function DeviceList() {
     durban_johannesburg_b: "Durban - Johannesburg (Line B)",
   };
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["devices"],
-    queryFn: () =>
-      fetch("http://localhost:8080/api/devices").then((res) => res.json()),
-  });
+  const { data, isLoading, error } = useDevices();
 
   const { data: recentBatches } = useQuery({
     queryKey: ["recentBatches"],
-    queryFn: () =>
-      fetch("http://localhost:8080/api/telemetry/recent").then((res) =>
-        res.json(),
-      ),
+    queryFn: () => getJson("/api/telemetry/recent"),
   });
 
   const onlineDeviceIds = useMemo(() => {

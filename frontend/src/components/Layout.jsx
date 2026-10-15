@@ -12,7 +12,7 @@ function Layout({ children }) {
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header />
         <main
-          className={`flex-1 overflow-y-auto p-6 ${
+          className={`relative flex-1 overflow-y-auto p-6 ${
             isLanding
               ? "bg-[linear-gradient(rgba(15,23,42,0.3),rgba(15,23,42,0.3)),url('/landing-bg.jpg')] bg-cover bg-center"
               : "bg-slate-50"

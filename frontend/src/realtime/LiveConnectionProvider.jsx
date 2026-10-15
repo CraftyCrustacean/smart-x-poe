@@ -1,15 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useQueryClient } from "@tanstack/react-query";
+import { API_BASE } from "../lib/format";
 import { LiveContext } from "./liveContext";
 
-const API_BASE = "http://localhost:8080";
 const RECENT_ALERT_LIMIT = 50;
 
 export function LiveConnectionProvider({ children }) {
   const queryClient = useQueryClient();
   const [status, setStatus] = useState("connecting");
   const [recentAlerts, setRecentAlerts] = useState([]);
+  const [unreadAlerts, setUnreadAlerts] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -24,10 +25,12 @@ export function LiveConnectionProvider({ children }) {
     connection.on("BatchClosed", (summary) => {
       queryClient.setQueryData(["dashboardSummary"], summary);
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
+      queryClient.invalidateQueries({ queryKey: ["device"] });
     });
 
     connection.on("AlertRaised", (alert) => {
       setRecentAlerts((old) => [alert, ...old].slice(0, RECENT_ALERT_LIMIT));
+      setUnreadAlerts((n) => Math.min(n + 1, RECENT_ALERT_LIMIT));
     });
 
     const start = async () => {
@@ -66,9 +69,11 @@ export function LiveConnectionProvider({ children }) {
     };
   }, [queryClient]);
 
+  const markAlertsRead = useCallback(() => setUnreadAlerts(0), []);
+
   const value = useMemo(
-    () => ({ status, recentAlerts }),
-    [status, recentAlerts],
+    () => ({ status, recentAlerts, unreadAlerts, markAlertsRead }),
+    [status, recentAlerts, unreadAlerts, markAlertsRead],
   );
   return <LiveContext.Provider value={value}>{children}</LiveContext.Provider>;
 }
