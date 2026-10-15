@@ -16,7 +16,7 @@ public sealed class CommandService
         IReadOnlyDictionary<string, DeviceOverride?> PriorOverrides
     );
 
-    private readonly List<UndoEntry> _undo = new();
+    private readonly Stack<UndoEntry> _undo = new();
     private readonly LinkedList<CommandRecord> _history = new();
     private readonly Lock _lock = new();
     private long _lastId;
@@ -142,7 +142,7 @@ public sealed class CommandService
             );
 
             if (undoable)
-                _undo.Add(new UndoEntry(record, priors));
+                _undo.Push(new UndoEntry(record, priors));
 
             _history.AddFirst(record);
             if (_history.Count > HistoryLimit)
@@ -160,10 +160,8 @@ public sealed class CommandService
         lock (_lock)
         {
             DropExpired();
-            if (_undo.Count == 0)
+            if (!_undo.TryPop(out var entry))
                 return null;
-            var entry = _undo[^1];
-            _undo.RemoveAt(_undo.Count - 1);
             var commandId = entry.Record.Id;
 
             foreach (var (deviceId, prior) in entry.PriorOverrides)
@@ -195,14 +193,14 @@ public sealed class CommandService
         lock (_lock)
         {
             DropExpired();
-            return (_history.ToList(), _undo.Count > 0 ? _undo[^1].Record.Id : null);
+            return (_history.ToList(), _undo.TryPeek(out var top) ? top.Record.Id : null);
         }
     }
 
     private void DropExpired()
     {
-        var now = _clock.Current;
-        _undo.RemoveAll(e => e.Record.IssuedAtBatch + GraceBatches <= now);
+        if (_undo.TryPeek(out var top) && top.Record.IssuedAtBatch + GraceBatches <= _clock.Current)
+            _undo.Clear();
     }
 
     private bool IsRebooting(string deviceId, long batch) =>
