@@ -1,18 +1,38 @@
 import { Search } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { useLive } from "../realtime/liveContext";
 import NotificationBell from "./NotificationBell";
 
 function Header() {
+  const navigate = useNavigate();
+
+  const onSearch = (e) => {
+    e.preventDefault();
+    const input = e.currentTarget.elements.q;
+    const q = input.value.trim();
+    navigate(q ? `/command-stream?${new URLSearchParams({ q })}` : "/command-stream");
+    input.value = "";
+  };
+
   return (
     <header className="h-16 px-6 flex items-center justify-between bg-white border-b border-slate-300">
-      <div className="flex items-center gap-2 bg-white rounded rounded-full border border-slate-300 px-3 py-2 w-80">
-        <Search size={18} className="text-slate-400" />
+      <form
+        role="search"
+        onSubmit={onSearch}
+        className="flex items-center gap-2 bg-white rounded rounded-full border border-slate-300 px-3 py-2 w-80"
+      >
+        <Search size={18} className="text-slate-400" aria-hidden="true" />
+        <label htmlFor="header-search" className="sr-only">
+          Search devices by ID or MAC
+        </label>
         <input
-          type="text"
-          placeholder="Search..."
+          id="header-search"
+          name="q"
+          type="search"
+          placeholder="Search devices by ID or MAC…"
           className="bg-transparent outline-none w-full text-sm"
         />
-      </div>
+      </form>
 
       <div className="flex items-center gap-4">
         <LiveIndicator />
