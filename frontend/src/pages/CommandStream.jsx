@@ -14,7 +14,9 @@ import MetricByZoneChart from "../components/dashboard/MetricByZoneChart";
 import SegmentedToggle from "../components/dashboard/SegmentedToggle";
 import ScopeSummaryTable from "../components/dashboard/ScopeSummaryTable";
 import SubzoneMetricGrid from "../components/dashboard/SubzoneMetricGrid";
+import SearchPanel from "../components/search/SearchPanel";
 import { METRICS, ZONE_ORDER, zoneLabel } from "../lib/format";
+import { withoutSearch } from "../lib/search";
 
 const QUERY_STORAGE_KEY = "command-stream-query";
 
@@ -53,7 +55,10 @@ function CommandStream() {
   useEffect(() => {
     if (!query) return;
     try {
-      sessionStorage.setItem(QUERY_STORAGE_KEY, query);
+      sessionStorage.setItem(
+        QUERY_STORAGE_KEY,
+        withoutSearch(new URLSearchParams(query)).toString(),
+      );
     } catch {
       // If can't store in sessionStorage, just don't persist the filters.
     }
@@ -120,6 +125,10 @@ function CommandStream() {
             </div>
           )
         )}
+      </CardBoundary>
+
+      <CardBoundary what="device search">
+        <SearchPanel />
       </CardBoundary>
 
       <div className="grid gap-6 xl:grid-cols-3">

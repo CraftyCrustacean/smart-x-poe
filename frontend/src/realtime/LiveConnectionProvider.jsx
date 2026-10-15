@@ -27,6 +27,7 @@ export function LiveConnectionProvider({ children }) {
       queryClient.invalidateQueries({ queryKey: ["snapshots"] });
       queryClient.invalidateQueries({ queryKey: ["device"] });
       queryClient.invalidateQueries({ queryKey: ["commands"] });
+      queryClient.invalidateQueries({ queryKey: ["search"] });
     });
 
     connection.on("AlertRaised", (alert) => {
