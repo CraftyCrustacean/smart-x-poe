@@ -7,7 +7,6 @@ import Layout from "./components/Layout";
 import FeatureDemo from "./pages/FeatureDemo";
 import CommandStream from "./pages/CommandStream";
 import CommandHistory from "./pages/CommandHistory";
-import DeviceSearch from "./pages/DeviceSearch";
 import NotFound from "./pages/NotFound";
 
 function App() {
@@ -23,7 +22,6 @@ function App() {
             <Route path="/feature" element={<FeatureDemo />} />
             <Route path="/command-stream" element={<CommandStream />} />
             <Route path="/command-history" element={<CommandHistory />} />
-            <Route path="/search" element={<DeviceSearch />} />
             <Route path="*"element={<NotFound />} />
           </Routes>
         </Layout>

@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo, useState, useRef, useEffect } from "react";
+import { useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { Link } from "react-router-dom";
-import { Funnel } from "lucide-react";
 import { getJson } from "../api/dashboard";
 import { useDevices } from "../api/devices";
+import SearchResults from "../components/search/SearchResults";
+import useSearchParamsState from "../components/search/useSearchParamsState";
+import { showsResults } from "../lib/search";
 
 function DeviceList() {
   const [searchParams, setSearchParams] = useSearchParams();
+  const { update } = useSearchParamsState();
   const selectedZone = searchParams.get("zone");
   const selectedSubzone = searchParams.get("subzone");
-  const filterPanelRef = useRef(null);
-  const [filtersOpen, setFiltersOpen] = useState(false);
-  const filterButtonRef = useRef(null);
+  const searching = showsResults(searchParams);
 
   const zone_labels = {
     richards_bay_durban: "Richards Bay - Durban",
@@ -47,39 +48,57 @@ function DeviceList() {
     return new Set(deviceIds);
   }, [recentBatches]);
 
-  const [categoryFilter, setCategoryFilter] = useState("all");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [chainageMin, setChainageMin] = useState("");
-  const [chainageMax, setChainageMax] = useState("");
+  const registerButton = (
+    <Link
+      to="/devices/new"
+      className="px-3 py-1.5 rounded-md bg-white border border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
+    >
+      Register Device
+    </Link>
+  );
 
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      const clickedButton = filterButtonRef.current?.contains(event.target);
-      const clickedPanel = filterPanelRef.current?.contains(event.target);
+  const page = (content) => (
+    <div>
+      <h1 className="text-2xl font-bold text-slate-900">Device Details</h1>
+      <p className="text-slate-500 mb-6">
+        Browse by zone, or search and filter from the bar above
+      </p>
 
-      if (!clickedButton && !clickedPanel) {
-        if (filtersOpen) {
-          event.preventDefault();
-        }
-        setFiltersOpen(false);
-      }
+      <div className="bg-white border border-slate-300 rounded-lg p-6">
+        {content}
+      </div>
+    </div>
+  );
 
-      if (!clickedButton && !clickedPanel) {
-        setFiltersOpen(false);
-      }
-    };
+  if (searching) {
+    const browsingSubzone =
+      selectedSubzone &&
+      [...searchParams.keys()].every((k) => ["zone", "subzone", "sort", "page"].includes(k));
 
-    if (filtersOpen) {
-      document.addEventListener("click", handleClickOutside, true);
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutside, true);
-    };
-  }, [filtersOpen]);
-
-  if (isLoading) return <p>Loading...</p>;
-  if (error) return <p>Something went wrong: {error.message}</p>;
+    return page(
+      <div>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-slate-800">
+            {browsingSubzone
+              ? `Devices in ${zone_labels[selectedZone] || selectedZone} > ${selectedSubzone}`
+              : "Search results"}
+          </h2>
+          <div className="flex gap-2">
+            {registerButton}
+            {browsingSubzone && (
+              <button
+                onClick={() => setSearchParams({ zone: selectedZone })}
+                className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
+              >
+                Back
+              </button>
+            )}
+          </div>
+        </div>
+        <SearchResults params={searchParams} update={update} />
+      </div>,
+    );
+  }
 
   if (isLoading) return <p>Loading...</p>;
   if (error) return <p>Something went wrong: {error.message}</p>;
@@ -115,15 +134,6 @@ function DeviceList() {
     ).length;
     return { subzone, deviceCount: devicesInSubzone.length, disconnectedCount };
   });
-
-  const registerButton = (
-    <Link
-      to="/devices/new"
-      className="px-3 py-1.5 rounded-md bg-white border border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
-    >
-      Register Device
-    </Link>
-  );
 
   let content;
 
@@ -161,7 +171,7 @@ function DeviceList() {
         </div>
       </div>
     );
-  } else if (!selectedSubzone) {
+  } else {
     content = (
       <div>
         <div className="flex items-center justify-between mb-4">
@@ -201,169 +211,9 @@ function DeviceList() {
         </div>
       </div>
     );
-  } else {
-    const filteredDevices = data.filter(
-      (d) =>
-        d.topology?.zone === selectedZone &&
-        d.topology?.subzone === selectedSubzone,
-    );
-
-    const finalDevices = filteredDevices.filter((device) => {
-      const matchesCategory =
-        categoryFilter === "all" || device.category === categoryFilter;
-
-      const isOnline = onlineDeviceIds.has(device.device_id);
-      const matchesStatus =
-        statusFilter === "all" ||
-        (statusFilter === "online" && isOnline) ||
-        (statusFilter === "offline" && !isOnline);
-
-      const chainage = device.location?.chainage_km;
-      const matchesMin =
-        chainageMin === "" || chainage >= parseFloat(chainageMin);
-      const matchesMax =
-        chainageMax === "" || chainage <= parseFloat(chainageMax);
-
-      return matchesCategory && matchesStatus && matchesMin && matchesMax;
-    });
-
-    content = (
-      <div>
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-xl font-semibold text-slate-800">
-            Devices in {zone_labels[selectedZone] || selectedZone} &gt;{" "}
-            {selectedSubzone}
-          </h2>
-          <div className="flex items-start gap-2">
-            <div className="relative">
-              <button
-                ref={filterButtonRef}
-                onClick={() => setFiltersOpen((prev) => !prev)}
-                className="p-2 rounded-md border border-transparent bg-white text-slate-900 hover: hover:text-orange-600 transition-colors"
-                aria-label="Filters"
-              >
-                <Funnel size={18} strokeWidth={1} />
-              </button>
-              {filtersOpen && (
-                <div
-                  ref={filterPanelRef}
-                  className="absolute z-10 mt-2 bg-white border border-slate-300 rounded-lg shadow-lg p-4 flex flex-col gap-3 w-72"
-                >
-                  <label className="text-xs font-medium text-slate-500">
-                    Category
-                  </label>
-                  <select
-                    value={categoryFilter}
-                    onChange={(e) => setCategoryFilter(e.target.value)}
-                    className="px-3 py-1.5 border border-slate-300 rounded-md text-sm"
-                  >
-                    <option value="all">All Categories</option>
-                    <option value="Environmental">Environmental</option>
-                    <option value="Actuator">Actuator</option>
-                    <option value="FlowRate">FlowRate</option>
-                  </select>
-                  <label className="text-xs font-medium text-slate-500">
-                    Status
-                  </label>
-                  <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="px-3 py-1.5 border border-slate-300 rounded-md text-sm"
-                  >
-                    <option value="all">All Statuses</option>
-                    <option value="online">Online</option>
-                    <option value="offline">Offline</option>
-                  </select>
-                  <div className="flex flex-col gap-1">
-                    <label className="text-xs font-medium text-slate-500">
-                      Chainage Range (km)
-                    </label>
-                    <input
-                      type="number"
-                      placeholder="Min"
-                      value={chainageMin}
-                      onChange={(e) => setChainageMin(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-300 rounded-md text-sm w-full"
-                    />
-                    <input
-                      type="number"
-                      placeholder="Max"
-                      value={chainageMax}
-                      onChange={(e) => setChainageMax(e.target.value)}
-                      className="px-3 py-1.5 border border-slate-300 rounded-md text-sm w-full"
-                    />
-                    <button
-                      onClick={() => {
-                        setCategoryFilter("all");
-                        setStatusFilter("all");
-                        setChainageMin("");
-                        setChainageMax("");
-                      }}
-                      className="px-3 py-1.5 rounded-md bg-white border: border-1 border-orange-300 text-sm text-slate-900 hover:bg-orange-100 transition-colors"
-                    >
-                      Reset Filters
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-            {registerButton}
-            <button
-              onClick={() => setSearchParams({ zone: selectedZone })}
-              className="px-3 py-1.5 rounded-md boreder: border-1 border-transparent bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
-            >
-              Back
-            </button>
-          </div>
-        </div>
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
-          <div className="grid grid-cols-[auto_1fr_1fr_1fr] gap-3 px-4 py-2 bg-orange-100 text-xs font-bold text-slate-900 uppercase tracking-wide border-b border-slate-200">
-            <span></span>
-            <span>Device ID</span>
-            <span>Chainage</span>
-            <span>Category</span>
-          </div>
-
-          <div className="divide-y divide-slate-200">
-            {finalDevices.map((device) => {
-              const isOnline = onlineDeviceIds.has(device.device_id);
-              return (
-                <Link
-                  key={device.device_id}
-                  to={`/devices/${device.device_id}`}
-                  className="grid grid-cols-[auto_1fr_1fr_1fr] gap-3 items-center px-4 py-3 hover:bg-orange-50 transition-colors"
-                >
-                  <span
-                    className="h-2.5 w-2.5 rounded-full inline-block"
-                    style={{
-                      backgroundColor: isOnline ? "#22c55e" : "#c4b9b9",
-                    }}
-                    title={isOnline ? "Active in latest telemetry" : "Offline"}
-                  />
-                  <span className="text-slate-900">{device.device_id}</span>
-                  <span className="text-slate-500">
-                    {device.location?.chainage_km} km
-                  </span>
-                  <span className="text-slate-500">{device.category}</span>
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-      </div>
-    );
   }
 
-  return (
-    <div>
-      <h1 className="text-2xl font-bold text-slate-900">Device Details</h1>
-      <p className="text-slate-500 mb-6">View and register devices</p>
-
-      <div className="bg-white border border-slate-300 rounded-lg p-6">
-        {content}
-      </div>
-    </div>
-  );
+  return page(content);
 }
 
 export default DeviceList;

@@ -14,8 +14,20 @@ export const SEARCH_SORTS = [
   { value: "lastseen", label: "Longest silent" },
 ];
 
-export const FILTER_KEYS = ["q", "cat", "alert", "zone", "sub", "low", "ovr"];
+export const SEARCH_PATH = "/devices";
+
+export const LOCATION_KEYS = ["zone", "subzone"];
+export const FILTER_KEYS = ["q", "cat", "alert", ...LOCATION_KEYS, "kmin", "kmax", "low", "ovr"];
 export const SEARCH_KEYS = [...FILTER_KEYS, "sort", "page"];
+
+const isSet = (v) => v.trim() !== "" && v !== "all";
+
+export const activeFilters = (params, keys = FILTER_KEYS) =>
+  keys.filter((k) => params.getAll(k).some(isSet));
+
+export const showsResults = (params) =>
+  Boolean(params.get("subzone")) ||
+  activeFilters(params).some((k) => !LOCATION_KEYS.includes(k));
 
 export function withChanges(params, changes, { resetPage = true } = {}) {
   const next = new URLSearchParams(params);
@@ -35,7 +47,9 @@ export function toApiQuery(params) {
   const alert = params.get("alert");
   if (alert && alert !== "all") api.set("alert", alert);
   if (params.get("zone")) api.set("zone", params.get("zone"));
-  if (params.get("sub")) api.set("subzone", params.get("sub"));
+  if (params.get("subzone")) api.set("subzone", params.get("subzone"));
+  if (params.get("kmin")) api.set("minKm", params.get("kmin"));
+  if (params.get("kmax")) api.set("maxKm", params.get("kmax"));
   if (params.get("low") === "1") api.set("lowBattery", "true");
   if (params.get("ovr") === "1") api.set("override", "true");
   api.set("sort", params.get("sort") ?? "alerts");
@@ -45,12 +59,7 @@ export function toApiQuery(params) {
 
 export function filterSnapshot(params) {
   const snapshot = {};
-  for (const key of FILTER_KEYS) {
-    const values = params
-      .getAll(key)
-      .map((v) => v.trim())
-      .filter((v) => v !== "" && v !== "all");
-    if (values.length) snapshot[key] = values;
-  }
+  for (const key of activeFilters(params))
+    snapshot[key] = params.getAll(key).map((v) => v.trim()).filter(isSet);
   return snapshot;
 }
