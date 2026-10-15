@@ -41,6 +41,15 @@ public sealed record DeviceSearchPage(
     IReadOnlyList<DeviceSearchResult> Results
 );
 
+public sealed record DeviceSuggestion(
+    string DeviceId,
+    DeviceCategory Category,
+    string Zone,
+    string Subzone,
+    bool Offline,
+    bool InAlert
+);
+
 public sealed record SearchClickRequest(string DeviceId, Dictionary<string, string[]>? Filters);
 
 public sealed record SearchClick(

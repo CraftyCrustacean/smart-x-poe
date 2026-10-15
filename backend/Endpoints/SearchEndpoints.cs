@@ -17,6 +17,13 @@ public static class SearchEndpoints
                 Results.Ok(search.Search(query))
         );
 
+        // GET /api/search/suggest?q=a1b2&limit=8
+        group.MapGet(
+            "/suggest",
+            (string? q, int? limit, DeviceSearchService search) =>
+                Results.Ok(search.Suggest(q, limit ?? 8))
+        );
+
         // POST /api/search/clicks
         group.MapPost(
             "/clicks",

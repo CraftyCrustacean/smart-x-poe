@@ -129,6 +129,35 @@ public sealed class DeviceSearchService
         );
     }
 
+    public IReadOnlyList<DeviceSuggestion> Suggest(string? q, int limit)
+    {
+        var text = Normalise(q);
+        if (text.Length == 0)
+            return [];
+
+        var offline = new HashSet<string>(_disconnected.Snapshot());
+        var inAlert = new HashSet<string>(_alerts.Snapshot().Select(k => k.DeviceId));
+
+        return _registry
+            .Snapshot()
+            .Select(d => (Device: d, Id: Normalise(d.DeviceId)))
+            .Select(x => (x.Device, x.Id, At: x.Id.IndexOf(text, StringComparison.Ordinal)))
+            .Where(x => x.At >= 0)
+            .OrderBy(x => x.At)
+            .ThenBy(x => x.Id.Length)
+            .ThenBy(x => x.Id, StringComparer.Ordinal)
+            .Take(Math.Clamp(limit, 1, 10))
+            .Select(x => new DeviceSuggestion(
+                x.Device.DeviceId,
+                x.Device.Category,
+                x.Device.Zone,
+                x.Device.Subzone,
+                offline.Contains(x.Device.DeviceId),
+                inAlert.Contains(x.Device.DeviceId)
+            ))
+            .ToList();
+    }
+
     private static List<DeviceSearchResult> Sort(List<DeviceSearchResult> results, string? sort) =>
         (sort ?? "alerts").ToLowerInvariant() switch
         {
