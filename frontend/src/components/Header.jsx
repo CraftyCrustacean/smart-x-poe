@@ -1,17 +1,44 @@
+import { useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
+import { withChanges } from "../lib/search";
 import { useLive } from "../realtime/liveContext";
 import NotificationBell from "./NotificationBell";
 
 function Header() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
+  const [params, setParams] = useSearchParams();
+  const onSearchPage = pathname === "/search";
+
+  const urlQ = onSearchPage ? (params.get("q") ?? "") : "";
+  const [text, setText] = useState(urlQ);
+  const [prevUrlQ, setPrevUrlQ] = useState(urlQ);
+  if (urlQ !== prevUrlQ) {
+    setPrevUrlQ(urlQ);
+    setText(urlQ);
+  }
+
+  const timer = useRef(null);
+  useEffect(() => () => clearTimeout(timer.current), [onSearchPage]);
+
+  const setQuery = (q) =>
+    setParams((prev) => withChanges(prev, { q }), { replace: true });
+
+  const onChange = (e) => {
+    const value = e.target.value;
+    setText(value);
+    if (!onSearchPage) return;
+    clearTimeout(timer.current);
+    timer.current = setTimeout(() => setQuery(value), 300);
+  };
 
   const onSearch = (e) => {
     e.preventDefault();
-    const input = e.currentTarget.elements.q;
-    const q = input.value.trim();
-    navigate(q ? `/command-stream?${new URLSearchParams({ q })}` : "/command-stream");
-    input.value = "";
+    clearTimeout(timer.current);
+    const q = text.trim();
+    if (onSearchPage) setQuery(text);
+    else navigate(q ? `/search?${new URLSearchParams({ q })}` : "/search");
   };
 
   return (
@@ -29,6 +56,8 @@ function Header() {
           id="header-search"
           name="q"
           type="search"
+          value={text}
+          onChange={onChange}
           placeholder="Search devices by ID or MAC…"
           className="bg-transparent outline-none w-full text-sm"
         />
