@@ -117,7 +117,7 @@ public sealed class DeviceSearchService
             })
             .ToList();
 
-        var sorted = Sort(results, query.Sort);
+        var sorted = Sort(results, query.Sort, query.Dir);
         var page = Math.Max(1, query.Page ?? 1);
 
         return new DeviceSearchPage(
@@ -158,30 +158,31 @@ public sealed class DeviceSearchService
             .ToList();
     }
 
-    private static List<DeviceSearchResult> Sort(List<DeviceSearchResult> results, string? sort) =>
-        (sort ?? "alerts").ToLowerInvariant() switch
+    private static List<DeviceSearchResult> Sort(
+        List<DeviceSearchResult> results,
+        string? sort,
+        string? dir
+    )
+    {
+        var desc = string.Equals(dir, "desc", StringComparison.OrdinalIgnoreCase);
+
+        IOrderedEnumerable<DeviceSearchResult> ordered = (sort ?? "").ToLowerInvariant() switch
         {
-            "severity" => results
-                .OrderByDescending(r => r.Severity)
-                .ThenBy(r => r.Zone)
-                .ThenBy(r => r.ChainageKm)
-                .ToList(),
+            "id" => results.OrderByDir(r => r.DeviceId, desc, StringComparer.Ordinal),
+            "category" => results.OrderByDir(r => r.Category.ToString(), desc, StringComparer.Ordinal),
+            "location" => results.OrderByDir(r => r.Zone, desc).ThenByDir(r => r.ChainageKm, desc),
             "battery" => results
-                .OrderBy(r => r.BatteryPct ?? int.MaxValue)
-                .ThenBy(r => r.Zone)
-                .ThenBy(r => r.ChainageKm)
-                .ToList(),
-            "lastseen" => results
-                .OrderBy(r => r.LastSeenUtc ?? DateTime.MaxValue)
-                .ThenBy(r => r.Zone)
-                .ThenBy(r => r.ChainageKm)
-                .ToList(),
-            _ => results
-                .OrderByDescending(r => r.ActiveAlerts.Count > 0 || r.Offline)
-                .ThenBy(r => r.Zone)
-                .ThenBy(r => r.ChainageKm)
-                .ToList(),
+                .OrderBy(r => r.BatteryPct is null)
+                .ThenByDir(r => r.BatteryPct ?? 0, desc),
+            "status" => results
+                .OrderByDir(r => r.ActiveAlerts.Count > 0, desc)
+                .ThenByDir(r => r.Severity, desc)
+                .ThenByDir(r => r.Offline, desc),
+            _ => results.OrderByDescending(r => r.ActiveAlerts.Count > 0 || r.Offline),
         };
+
+        return ordered.ThenBy(r => r.Zone).ThenBy(r => r.ChainageKm).ToList();
+    }
 
     private float LatestSeverity(DeviceState device)
     {
@@ -210,4 +211,20 @@ public sealed class DeviceSearchService
             : new string(
                 text.Where(ch => ch != ':' && ch != '-' && !char.IsWhiteSpace(ch)).ToArray()
             ).ToUpperInvariant();
+}
+
+file static class OrderingExtensions
+{
+    public static IOrderedEnumerable<T> OrderByDir<T, TKey>(
+        this IEnumerable<T> source,
+        Func<T, TKey> key,
+        bool desc,
+        IComparer<TKey>? comparer = null
+    ) => desc ? source.OrderByDescending(key, comparer) : source.OrderBy(key, comparer);
+
+    public static IOrderedEnumerable<T> ThenByDir<T, TKey>(
+        this IOrderedEnumerable<T> source,
+        Func<T, TKey> key,
+        bool desc
+    ) => desc ? source.ThenByDescending(key) : source.ThenBy(key);
 }

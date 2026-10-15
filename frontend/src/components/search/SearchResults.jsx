@@ -1,11 +1,31 @@
 import { Link, useNavigate } from "react-router-dom";
-import { TriangleAlert } from "lucide-react";
+import { ChevronDown, ChevronUp, TriangleAlert } from "lucide-react";
 import { logSearchClick, useDeviceSearch } from "../../api/search";
 import { metricLabel, zoneLabel } from "../../lib/format";
-import { filterSnapshot, SEARCH_SORTS, toApiQuery } from "../../lib/search";
-import TimeAgo from "../TimeAgo";
+import { filterSnapshot, SORT_COLUMNS, toApiQuery } from "../../lib/search";
 import { ErrorNotice, Loading, Skeleton } from "../dashboard/LoadState";
 import FilterChips from "./FilterChips";
+
+function SortHeader({ column, sort, dir, onSort }) {
+  const active = sort === column;
+  const Icon = dir === "asc" ? ChevronUp : ChevronDown;
+  return (
+    <th
+      scope="col"
+      aria-sort={active ? (dir === "asc" ? "ascending" : "descending") : undefined}
+      className="px-2 py-1"
+    >
+      <button
+        type="button"
+        onClick={() => onSort(column)}
+        className="inline-flex items-center gap-1 rounded px-2 py-1 uppercase tracking-wide hover:bg-orange-200 transition-colors"
+      >
+        {SORT_COLUMNS[column].label}
+        {active && <Icon size={14} aria-hidden="true" />}
+      </button>
+    </th>
+  );
+}
 
 function StatusCell({ r }) {
   return (
@@ -40,12 +60,24 @@ function StatusCell({ r }) {
 
 export default function SearchResults({ params, update }) {
   const navigate = useNavigate();
-  const sort = params.get("sort") ?? "alerts";
+  const sort = SORT_COLUMNS[params.get("sort")] ? params.get("sort") : null;
+  const dir = params.get("dir") === "desc" ? "desc" : "asc";
   const page = Number(params.get("page") ?? "1");
 
   const { data, isLoading, isFetching, error, refetch } = useDeviceSearch(
     toApiQuery(params),
   );
+
+  const sortBy = (column) =>
+    update({
+      sort: column,
+      dir:
+        sort === column
+          ? dir === "asc"
+            ? "desc"
+            : "asc"
+          : SORT_COLUMNS[column].firstDir,
+    });
 
   const logClick = (deviceId) => logSearchClick(deviceId, filterSnapshot(params));
 
@@ -62,29 +94,13 @@ export default function SearchResults({ params, update }) {
     <div className="space-y-3">
       <FilterChips params={params} update={update} lowBatteryPct={data?.lowBatteryPct} />
 
-      <div className="flex flex-wrap items-center justify-between gap-2 text-sm text-slate-600">
-        <p aria-live="polite">
-          {data
-            ? data.total === 0
-              ? "No devices match."
-              : `Showing ${from}–${to} of ${data.total}${isFetching ? " · updating…" : ""}`
-            : "Searching…"}
-        </p>
-        <label className="inline-flex items-center gap-2">
-          Sort
-          <select
-            className="rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-700"
-            value={sort}
-            onChange={(e) => update({ sort: e.target.value })}
-          >
-            {SEARCH_SORTS.map((s) => (
-              <option key={s.value} value={s.value}>
-                {s.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </div>
+      <p aria-live="polite" className="text-sm text-slate-600">
+        {data
+          ? data.total === 0
+            ? "No devices match."
+            : `Showing ${from}–${to} of ${data.total}${isFetching ? " · updating…" : ""}`
+          : "Searching…"}
+      </p>
 
       {isLoading ? (
         <Loading label="Searching…" className="space-y-2">
@@ -96,28 +112,20 @@ export default function SearchResults({ params, update }) {
         <ErrorNotice message="Search failed." error={error} onRetry={refetch} />
       ) : data?.total > 0 ? (
         <div className="overflow-x-auto border border-slate-200 rounded-lg">
-          <table className="w-full text-sm text-left">
+          <table className="w-full min-w-[60rem] table-fixed text-sm text-left">
             <caption className="sr-only">Matching devices</caption>
+            <colgroup>
+              <col className="w-48" />
+              <col className="w-36" />
+              <col />
+              <col className="w-28" />
+              <col className="w-[23rem]" />
+            </colgroup>
             <thead className="bg-orange-100 text-xs font-bold uppercase tracking-wide text-slate-900 border-b border-slate-200">
               <tr>
-                <th scope="col" className="px-4 py-2">
-                  Device ID
-                </th>
-                <th scope="col" className="px-4 py-2">
-                  Category
-                </th>
-                <th scope="col" className="px-4 py-2">
-                  Location
-                </th>
-                <th scope="col" className="px-4 py-2">
-                  Battery
-                </th>
-                <th scope="col" className="px-4 py-2">
-                  Last seen
-                </th>
-                <th scope="col" className="px-4 py-2">
-                  Status
-                </th>
+                {Object.keys(SORT_COLUMNS).map((key) => (
+                  <SortHeader key={key} column={key} sort={sort} dir={dir} onSort={sortBy} />
+                ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200">
@@ -132,7 +140,7 @@ export default function SearchResults({ params, update }) {
                 >
                   <th
                     scope="row"
-                    className="px-4 py-3 font-normal text-slate-900 whitespace-nowrap"
+                    className="px-4 py-3 font-normal text-slate-900 truncate"
                   >
                     <Link
                       to={`/devices/${r.deviceId}`}
@@ -143,14 +151,11 @@ export default function SearchResults({ params, update }) {
                     </Link>
                   </th>
                   <td className="px-4 py-3 text-slate-500">{r.category}</td>
-                  <td className="px-4 py-3 text-slate-500 whitespace-nowrap">
+                  <td className="px-4 py-3 text-slate-500 truncate">
                     {zoneLabel(r.zone)} · {r.subzone} · {r.chainageKm.toFixed(1)} km
                   </td>
                   <td className="px-4 py-3 text-slate-500 tabular-nums">
                     {r.batteryPct != null ? `${r.batteryPct}%` : "—"}
-                  </td>
-                  <td className="px-4 py-3 text-slate-500 tabular-nums whitespace-nowrap">
-                    {r.lastSeenUtc ? <TimeAgo iso={r.lastSeenUtc} /> : "Never"}
                   </td>
                   <td className="px-4 py-3">
                     <StatusCell r={r} />

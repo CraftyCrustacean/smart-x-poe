@@ -15,6 +15,7 @@ public sealed class DeviceSearchQuery
     public float? MinKm { get; set; }
     public float? MaxKm { get; set; }
     public string? Sort { get; set; }
+    public string? Dir { get; set; }
     public int? Page { get; set; }
 }
 

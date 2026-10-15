@@ -6,7 +6,7 @@ import { getJson } from "../api/dashboard";
 import { useDevices } from "../api/devices";
 import SearchResults from "../components/search/SearchResults";
 import useSearchParamsState from "../components/search/useSearchParamsState";
-import { showsResults } from "../lib/search";
+import { LOCATION_KEYS, showsResults, VIEW_KEYS } from "../lib/search";
 
 function DeviceList() {
   const [searchParams, setSearchParams] = useSearchParams();
@@ -73,7 +73,7 @@ function DeviceList() {
   if (searching) {
     const browsingSubzone =
       selectedSubzone &&
-      [...searchParams.keys()].every((k) => ["zone", "subzone", "sort", "page"].includes(k));
+      [...searchParams.keys()].every((k) => [...LOCATION_KEYS, ...VIEW_KEYS].includes(k));
 
     return page(
       <div>

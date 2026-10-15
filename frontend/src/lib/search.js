@@ -7,18 +7,21 @@ export const ALERT_OPTIONS = [
   { value: "any", label: "Alert or disconnected" },
 ];
 
-export const SEARCH_SORTS = [
-  { value: "alerts", label: "Alerts first" },
-  { value: "severity", label: "Severity" },
-  { value: "battery", label: "Lowest battery" },
-  { value: "lastseen", label: "Longest silent" },
-];
+export const SORT_COLUMNS = {
+  id: { label: "Device ID", firstDir: "asc" },
+  category: { label: "Category", firstDir: "asc" },
+  location: { label: "Location", firstDir: "asc" },
+  battery: { label: "Battery", firstDir: "asc" },
+  status: { label: "Status", firstDir: "desc" },
+};
+
+export const VIEW_KEYS = ["sort", "dir", "page"];
 
 export const SEARCH_PATH = "/devices";
 
 export const LOCATION_KEYS = ["zone", "subzone"];
 export const FILTER_KEYS = ["q", "cat", "alert", ...LOCATION_KEYS, "kmin", "kmax", "low", "ovr"];
-export const SEARCH_KEYS = [...FILTER_KEYS, "sort", "page"];
+export const SEARCH_KEYS = [...FILTER_KEYS, ...VIEW_KEYS];
 
 const isSet = (v) => v.trim() !== "" && v !== "all";
 
@@ -52,7 +55,10 @@ export function toApiQuery(params) {
   if (params.get("kmax")) api.set("maxKm", params.get("kmax"));
   if (params.get("low") === "1") api.set("lowBattery", "true");
   if (params.get("ovr") === "1") api.set("override", "true");
-  api.set("sort", params.get("sort") ?? "alerts");
+  if (SORT_COLUMNS[params.get("sort")]) {
+    api.set("sort", params.get("sort"));
+    api.set("dir", params.get("dir") === "desc" ? "desc" : "asc");
+  }
   api.set("page", params.get("page") ?? "1");
   return api;
 }
