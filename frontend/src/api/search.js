@@ -10,6 +10,15 @@ export const useDeviceSearch = (apiQuery) =>
     placeholderData: keepPreviousData,
   });
 
+export const useSearchSuggestions = (q) =>
+  useQuery({
+    queryKey: ["suggest", q],
+    queryFn: () => getJson(`/api/search/suggest?${new URLSearchParams({ q, limit: "8" })}`),
+    enabled: q.trim() !== "",
+    staleTime: 30_000,
+    placeholderData: keepPreviousData,
+  });
+
 export function logSearchClick(deviceId, filters) {
   fetch(`${API_BASE}/api/search/clicks`, {
     method: "POST",
