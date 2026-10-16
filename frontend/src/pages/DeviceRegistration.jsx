@@ -95,6 +95,10 @@ function DeviceRegistration() {
         <form
           onSubmit={(e) => {
             e.preventDefault();
+            if (formData.mac_address.length !== 17) {
+              toast.error("MAC address must be 12 hex digits (XX:XX:XX:XX:XX:XX).");
+              return;
+            }
             registerMutation.mutate(formData);
           }}
           className="space-y-6"

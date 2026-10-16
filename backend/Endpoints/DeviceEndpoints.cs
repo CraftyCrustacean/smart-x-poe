@@ -1,4 +1,5 @@
-﻿using backend.Models.Live;
+﻿using System.Text.RegularExpressions;
+using backend.Models.Live;
 using backend.Models.Provision;
 using backend.Models.Readings;
 using backend.Models.State;
@@ -13,6 +14,11 @@ namespace backend.Endpoints;
 
 public static class DeviceEndpoints
 {
+    private static readonly Regex MacAddressPattern = new(
+        "^([0-9A-Fa-f]{2}:){5}[0-9A-Fa-f]{2}$",
+        RegexOptions.Compiled
+    );
+
     public static void MapDeviceEndpoints(this IEndpointRouteBuilder app)
     {
         var group = app.MapGroup("/api/devices");
@@ -27,6 +33,16 @@ public static class DeviceEndpoints
                 PipelineData pipelineData
             ) =>
             {
+                if (!MacAddressPattern.IsMatch(request.MacAddress))
+                {
+                    return Results.BadRequest(
+                        new
+                        {
+                            message = $"Invalid MAC address: {request.MacAddress}. Expected format XX:XX:XX:XX:XX:XX.",
+                        }
+                    );
+                }
+
                 if (await store.DeviceExists(request.DeviceId))
                 {
                     return Results.Conflict(
