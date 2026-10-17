@@ -55,6 +55,7 @@ builder.Services.AddHostedService<TelemetryConsumer>();
 builder.Services.AddSingleton(typeof(ReadingHistory<>));
 builder.Services.AddSingleton<DisconnectedDevices>();
 builder.Services.AddSingleton<ActiveAlerts>();
+builder.Services.AddSingleton<AlertLog>();
 builder.Services.AddSingleton<DisconnectDetector>();
 builder.Services.AddHostedService<BatchCloseHandler>();
 builder.Services.Configure<ThresholdSettings>(

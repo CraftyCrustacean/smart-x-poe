@@ -29,6 +29,7 @@ public class TelemetryProcessor
     private readonly MutedDevices _muted;
     private readonly AcknowledgedAlerts _acknowledged;
     private readonly BatchClock _clock;
+    private readonly AlertLog _alertLog;
 
     public TelemetryProcessor(
         ILogger<TelemetryProcessor> logger,
@@ -46,7 +47,8 @@ public class TelemetryProcessor
         LiveUpdates liveUpdates,
         MutedDevices muted,
         AcknowledgedAlerts acknowledged,
-        BatchClock clock
+        BatchClock clock,
+        AlertLog alertLog
     )
     {
         _flowRateHistory = flowRateHistory;
@@ -65,6 +67,7 @@ public class TelemetryProcessor
         _acknowledged = acknowledged;
         _muted = muted;
         _clock = clock;
+        _alertLog = alertLog;
     }
 
     public async Task ProcessProvisioning(string message)
@@ -196,29 +199,43 @@ public class TelemetryProcessor
                             check.Severity
                         );
 
-                        if (
-                            !_muted.Contains(reading.DeviceId)
-                            && _deviceRegistry.TryGet(reading.DeviceId, out var device)
-                        )
+                        if (_deviceRegistry.TryGet(reading.DeviceId, out var device))
                         {
-                            _liveUpdates.AlertRaised(
-                                new AlertEvent(
-                                    reading.DeviceId,
+                            _alertLog.Raised(
+                                new RaisedAlert(
+                                    key,
                                     device.Zone,
                                     device.Subzone,
-                                    check.Metric,
+                                    device.ChainageKm,
                                     check.Value,
                                     check.Severity,
-                                    reading.TimeStamp,
+                                    _clock.Current,
                                     DateTime.UtcNow
                                 )
                             );
+
+                            if (!_muted.Contains(reading.DeviceId))
+                            {
+                                _liveUpdates.AlertRaised(
+                                    new AlertEvent(
+                                        reading.DeviceId,
+                                        device.Zone,
+                                        device.Subzone,
+                                        check.Metric,
+                                        check.Value,
+                                        check.Severity,
+                                        reading.TimeStamp,
+                                        DateTime.UtcNow
+                                    )
+                                );
+                            }
                         }
                     }
                 }
                 else if (_activeAlerts.Remove(key))
                 {
                     _acknowledged.Remove(key);
+                    _alertLog.Cleared(key);
 
                     _logger.LogInformation(
                         "Alert cleared: {DeviceId} {Metric}.",

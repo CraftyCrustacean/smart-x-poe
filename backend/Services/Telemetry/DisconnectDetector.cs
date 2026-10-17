@@ -14,16 +14,29 @@ public sealed class DisconnectDetector
     private readonly DeviceRegistry _registry;
     private readonly DisconnectedDevices _disconnected;
     private readonly ILogger<DisconnectDetector> _logger;
+    private readonly BatchClock _clock;
+    private readonly Dictionary<string, long> _offlineSince = new();
+    private readonly Lock _lock = new();
 
     public DisconnectDetector(
         DeviceRegistry registry,
         DisconnectedDevices disconnected,
-        ILogger<DisconnectDetector> logger
+        ILogger<DisconnectDetector> logger,
+        BatchClock clock
     )
     {
         _registry = registry;
         _disconnected = disconnected;
         _logger = logger;
+        _clock = clock;
+    }
+
+    public IReadOnlyDictionary<string, long> OfflineSince()
+    {
+        lock (_lock)
+        {
+            return new Dictionary<string, long>(_offlineSince);
+        }
     }
 
     public DisconnectResult Detect(TelemetryBatch batch)
@@ -39,6 +52,8 @@ public sealed class DisconnectDetector
             {
                 if (_disconnected.Remove(device.DeviceId))
                 {
+                    lock (_lock)
+                        _offlineSince.Remove(device.DeviceId);
                     reconnected++;
                     _logger.LogInformation("Device {DeviceId} reconnected.", device.DeviceId);
                 }
@@ -47,6 +62,8 @@ public sealed class DisconnectDetector
             {
                 if (_disconnected.TryAdd(device.DeviceId))
                 {
+                    lock (_lock)
+                        _offlineSince[device.DeviceId] = _clock.Current;
                     newlyDisconnected++;
                     _logger.LogWarning("Device {DeviceId} disconnected.", device.DeviceId);
                 }
