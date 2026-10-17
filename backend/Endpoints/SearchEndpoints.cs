@@ -1,4 +1,5 @@
 using backend.Models.Search;
+using backend.Services.Insights;
 using backend.Services.Search;
 using backend.Services.State;
 
@@ -27,7 +28,12 @@ public static class SearchEndpoints
         // POST /api/search/clicks
         group.MapPost(
             "/clicks",
-            (SearchClickRequest request, DeviceRegistry registry, SearchClickLog log) =>
+            (
+                SearchClickRequest request,
+                DeviceRegistry registry,
+                SearchClickLog log,
+                InsightEngine insights
+            ) =>
             {
                 if (string.IsNullOrEmpty(request.DeviceId))
                     return Results.BadRequest(new { message = "A device id is required." });
@@ -37,15 +43,15 @@ public static class SearchEndpoints
                         new { message = $"Device {request.DeviceId} is not registered." }
                     );
 
-                log.Add(
-                    new SearchClick(
-                        DateTime.UtcNow,
-                        device.DeviceId,
-                        device.Zone,
-                        device.Subzone,
-                        request.Filters ?? new Dictionary<string, string[]>()
-                    )
+                var click = new SearchClick(
+                    DateTime.UtcNow,
+                    device.DeviceId,
+                    device.Zone,
+                    device.Subzone,
+                    request.Filters ?? new Dictionary<string, string[]>()
                 );
+                log.Add(click);
+                insights.LearnFromClick(click);
                 return Results.NoContent();
             }
         );

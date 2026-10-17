@@ -4,6 +4,7 @@ using backend.Hubs;
 using backend.Services;
 using backend.Services.Commands;
 using backend.Services.History;
+using backend.Services.Insights;
 using backend.Services.Persistence;
 using backend.Services.Search;
 using backend.Services.Snapshots;
@@ -76,6 +77,7 @@ builder.Services.Configure<SearchSettings>(
 );
 builder.Services.AddSingleton<DeviceSearchService>();
 builder.Services.AddSingleton<SearchClickLog>();
+builder.Services.AddSingleton<InsightEngine>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -110,6 +112,7 @@ app.MapSnapshotEndpoints();
 app.MapDashboardEndpoints();
 app.MapCommandEndpoints();
 app.MapSearchEndpoints();
+app.MapInsightEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",

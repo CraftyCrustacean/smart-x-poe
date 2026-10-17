@@ -1,5 +1,6 @@
 using backend.Models.Commands;
 using backend.Services.Commands;
+using backend.Services.Insights;
 using backend.Services.State;
 
 namespace backend.Endpoints;
@@ -13,22 +14,28 @@ public static class CommandEndpoints
         // POST /api/commands
         group.MapPost(
             "/",
-            (CommandRequest request, CommandService commands) =>
+            (CommandRequest request, CommandService commands, InsightEngine insights) =>
             {
                 var outcome = commands.Issue(request);
-                return outcome.Record is null
-                    ? Results.BadRequest(new { message = outcome.Error })
-                    : Results.Ok(outcome.Record);
+                if (outcome.Record is null)
+                    return Results.BadRequest(new { message = outcome.Error });
+
+                insights.LearnFromCommand(outcome.Record);
+                return Results.Ok(outcome.Record);
             }
         );
 
         // POST /api/commands/undo
         group.MapPost(
             "/undo",
-            (CommandService commands) =>
-                commands.Undo() is { } undone
-                    ? Results.Ok(undone)
-                    : Results.Conflict(new { message = "Nothing to undo." })
+            (CommandService commands, InsightEngine insights) =>
+            {
+                if (commands.Undo() is not { } undone)
+                    return Results.Conflict(new { message = "Nothing to undo." });
+
+                insights.ForgetCommand(undone);
+                return Results.Ok(undone);
+            }
         );
 
         // GET /api/commands

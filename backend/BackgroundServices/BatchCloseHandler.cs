@@ -1,5 +1,6 @@
 using backend.Models.Telemetry;
 using backend.Services;
+using backend.Services.Insights;
 using backend.Services.Snapshots;
 using backend.Services.State;
 using backend.Services.Telemetry;
@@ -15,6 +16,7 @@ public sealed class BatchCloseHandler : IHostedService
     private readonly DashboardSummaryService _summaryService;
     private readonly LiveUpdates _liveUpdates;
     private readonly BatchClock _batchClock;
+    private readonly InsightEngine _insights;
 
     public BatchCloseHandler(
         TelemetryBatcher batcher,
@@ -23,7 +25,8 @@ public sealed class BatchCloseHandler : IHostedService
         SnapshotBuilder snapshotBuilder,
         DashboardSummaryService summaryService,
         LiveUpdates liveUpdates,
-        BatchClock batchClock
+        BatchClock batchClock,
+        InsightEngine insights
     )
     {
         _batcher = batcher;
@@ -33,6 +36,7 @@ public sealed class BatchCloseHandler : IHostedService
         _summaryService = summaryService;
         _liveUpdates = liveUpdates;
         _batchClock = batchClock;
+        _insights = insights;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -54,6 +58,16 @@ public sealed class BatchCloseHandler : IHostedService
         var disconnects = _disconnectDetector.Detect(batch);
         var scopes = _snapshotBuilder.Build(batch);
         _summaryService.RecordBatch(batch);
+
+        try
+        {
+            _insights.Rebuild();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to build insight, keeping previous.");
+        }
+
         _liveUpdates.BatchClosed(_summaryService.Build());
 
         _logger.LogInformation(
