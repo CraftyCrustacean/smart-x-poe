@@ -21,6 +21,7 @@ public static class CommandEndpoints
                     return Results.BadRequest(new { message = outcome.Error });
 
                 insights.LearnFromCommand(outcome.Record);
+                insights.Rebuild();
                 return Results.Ok(outcome.Record);
             }
         );
@@ -34,6 +35,7 @@ public static class CommandEndpoints
                     return Results.Conflict(new { message = "Nothing to undo." });
 
                 insights.ForgetCommand(undone);
+                insights.Rebuild();
                 return Results.Ok(undone);
             }
         );

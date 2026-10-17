@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { getJson } from "./dashboard";
 import { API_BASE } from "../lib/format";
 
-async function postJson(path, body) {
+export async function postJson(path, body) {
   const res = await fetch(`${API_BASE}${path}`, {
     method: "POST",
     headers: body ? { "Content-Type": "application/json" } : undefined,
@@ -25,6 +25,7 @@ function useRefreshAfterCommand() {
   return () => {
     queryClient.invalidateQueries({ queryKey: ["commands"] });
     queryClient.invalidateQueries({ queryKey: ["device"] });
+    queryClient.invalidateQueries({ queryKey: ["insights"] });
   };
 }
 

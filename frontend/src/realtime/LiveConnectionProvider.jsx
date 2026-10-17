@@ -28,6 +28,7 @@ export function LiveConnectionProvider({ children }) {
       queryClient.invalidateQueries({ queryKey: ["device"] });
       queryClient.invalidateQueries({ queryKey: ["commands"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
     });
 
     connection.on("AlertRaised", (alert) => {
@@ -38,6 +39,7 @@ export function LiveConnectionProvider({ children }) {
     connection.on("CommandsChanged", () => {
       queryClient.invalidateQueries({ queryKey: ["commands"] });
       queryClient.invalidateQueries({ queryKey: ["device"] });
+      queryClient.invalidateQueries({ queryKey: ["insights"] });
     });
 
     const start = async () => {

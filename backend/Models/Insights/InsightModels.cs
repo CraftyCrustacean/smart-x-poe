@@ -16,16 +16,17 @@ public sealed record Suggestion(
     float Severity,
     float Confidence,
     string TriggerVersion,
-    IReadOnlyList<string> Reasons,
+    SuggestionCause Cause,
     IReadOnlyList<string> Sources
 );
+
+public sealed record SuggestionCause(string Type, string? Metric, float Value, string DeviceId);
 
 public sealed record LearnedTransition(
     string Metric,
     string Action,
     string Scope,
-    int Count,
-    float Confidence
+    int Count
 );
 
 public sealed record DismissRequest(string Id, string TriggerVersion);

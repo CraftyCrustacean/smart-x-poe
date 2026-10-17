@@ -9,14 +9,14 @@ public static class InsightEndpoints
     {
         var group = app.MapGroup("/api/insights");
 
-        // GET /api/insights
+        // GET /api/insights?type=flow_rate_lps
         group.MapGet(
             "/",
-            (InsightEngine engine) =>
+            (string? type, InsightEngine engine) =>
                 Results.Ok(
                     new
                     {
-                        suggestions = engine.Current,
+                        suggestions = engine.Current(type),
                         maxSuggestions = InsightEngine.MaxSuggestions,
                         minSupport = InsightEngine.MinSupport,
                     }

@@ -5,6 +5,7 @@ import {
   RotateCcwClock,
   ChevronDown,
   Gauge,
+  Lightbulb,
   Network,
   PanelLeftClose,
   PanelLeftOpen,
@@ -196,13 +197,15 @@ function Sidebar() {
             <ModuleSection
               id="command-stream"
               title="Real-Time Command Stream and History"
-              paths={["/command-stream", "/command-history"]}
+              paths={["/command-stream", "/insights", "/command-history"]}
             >
               <NavItem
                 to="/command-stream"
                 icon={Gauge}
                 label="Command Stream"
               />
+
+              <NavItem to="/insights" icon={Lightbulb} label="Insights" />
 
               <NavItem
                 to="/command-history"

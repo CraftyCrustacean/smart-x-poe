@@ -28,7 +28,7 @@ public sealed class InsightEngine
     private readonly HashSet<string> _dismissed = new();
     private readonly Lock _lock = new();
 
-    private volatile IReadOnlyList<Suggestion> _current = [];
+    private volatile IReadOnlyList<Suggestion> _candidates = [];
 
     private readonly DeviceRegistry _registry;
     private readonly AlertLog _alertLog;
@@ -66,7 +66,13 @@ public sealed class InsightEngine
         _lowBattery = search.Value.LowBatteryPct;
     }
 
-    public IReadOnlyList<Suggestion> Current => _current;
+    public IReadOnlyList<Suggestion> Current(string? type) =>
+        TopK(
+            string.IsNullOrEmpty(type)
+                ? _candidates
+                : _candidates.Where(s => (s.Cause.Metric ?? s.Cause.Type) == type),
+            MaxSuggestions
+        );
 
     public void LearnFromCommand(CommandRecord record)
     {
@@ -166,16 +172,13 @@ public sealed class InsightEngine
         {
             return _transitions
                 .SelectMany(row =>
-                {
-                    var total = row.Value.Values.Sum();
-                    return row.Value.Select(cell => new LearnedTransition(
+                    row.Value.Select(cell => new LearnedTransition(
                         row.Key,
                         cell.Key.Action,
                         cell.Key.Scope,
-                        cell.Value,
-                        (float)cell.Value / total
-                    ));
-                })
+                        cell.Value
+                    ))
+                )
                 .OrderBy(t => t.Metric)
                 .ThenByDescending(t => t.Count)
                 .ToList();
@@ -235,7 +238,7 @@ public sealed class InsightEngine
         LongOffline(devices, offlineSince, muted, now, Add);
         LowBattery(devices.Values, muted, Add);
 
-        _current = TopK(candidates.Values, MaxSuggestions);
+        _candidates = candidates.Values.ToList();
     }
 
     private void Learned(
@@ -297,9 +300,7 @@ public sealed class InsightEngine
                         alert.Severity,
                         confidence,
                         $"{alert.Key.DeviceId}:{alert.Key.Metric}:{alert.RaisedAtBatch}",
-                        [
-                            $"{alert.Key.DeviceId} has a {alert.Key.Metric} alert. After these, users chose this {count} of {total} times.",
-                        ],
+                        Breach(alert),
                         ["Learned from user actions"]
                     )
                 );
@@ -341,7 +342,6 @@ public sealed class InsightEngine
         )
         {
             var worst = group.MaxBy(a => a.Severity)!;
-            var count = group.Count();
             add(
                 new Suggestion(
                     $"Acknowledge:{group.Key.Zone}/{group.Key.Subzone}",
@@ -355,9 +355,7 @@ public sealed class InsightEngine
                     worst.Severity,
                     0.9f,
                     group.Max(a => a.RaisedAtBatch).ToString(),
-                    [
-                        $"{count} critical alert(s) unacknowledged for {NeglectedBatches}+ batches. Worst is {worst.Key.DeviceId} ({worst.Key.Metric} {worst.Value:0.##}).",
-                    ],
+                    Breach(worst),
                     ["Neglected alerts"]
                 )
             );
@@ -423,9 +421,7 @@ public sealed class InsightEngine
                         position,
                         0.8f,
                         metric,
-                        [
-                            $"{metric} is {position:P0} of the way to its threshold and moved {moved:P0} of that gap over the last {DriftRecent} days.",
-                        ],
+                        new SuggestionCause("Drift", metric, recent, d.DeviceId),
                         ["Drift"]
                     )
                 );
@@ -469,9 +465,7 @@ public sealed class InsightEngine
                         alert.Severity,
                         0.7f,
                         $"{alert.Key.DeviceId}:{alert.Key.Metric}:{alert.RaisedAtBatch}",
-                        [
-                            $"Shares a monitoring point ({alert.ChainageKm:0.0} km) with {alert.Key.DeviceId}, which has a {alert.Key.Metric} alert.",
-                        ],
+                        Breach(alert),
                         ["Co-located device"]
                     )
                 );
@@ -510,7 +504,7 @@ public sealed class InsightEngine
                     batches,
                     0.6f,
                     since.ToString(),
-                    [$"Offline for {batches} batches (about {batches} simulated days)."],
+                    new SuggestionCause("Offline", null, batches, deviceId),
                     ["Long offline"]
                 )
             );
@@ -545,7 +539,7 @@ public sealed class InsightEngine
                     _lowBattery - battery,
                     0.5f,
                     (battery / 5).ToString(),
-                    [$"Battery at {battery}% (low is {_lowBattery}% or less)."],
+                    new SuggestionCause("Battery", null, battery, d.DeviceId),
                     ["Low battery"]
                 )
             );
@@ -563,6 +557,9 @@ public sealed class InsightEngine
             )
             : null;
 
+    private static SuggestionCause Breach(RaisedAlert alert) =>
+        new("Breach", alert.Key.Metric, alert.Value, alert.Key.DeviceId);
+
     private static string TargetKey(CommandTarget t) => t.DeviceId ?? $"{t.Zone}/{t.Subzone}";
 
     private static (int, float, float) Rank(Suggestion s) => (-s.Tier, s.Severity, s.Confidence);
@@ -573,7 +570,6 @@ public sealed class InsightEngine
         return better with
         {
             Kind = a.Kind == "Learned" || b.Kind == "Learned" ? "Learned" : "Rule",
-            Reasons = a.Reasons.Concat(b.Reasons).Distinct().ToList(),
             Sources = a.Sources.Concat(b.Sources).Distinct().ToList(),
         };
     }
