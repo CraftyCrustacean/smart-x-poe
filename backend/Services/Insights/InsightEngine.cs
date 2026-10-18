@@ -27,6 +27,7 @@ public sealed class InsightEngine
     private readonly Dictionary<long, (string Metric, ActionKey Action)> _creditedCommands = new();
     private readonly HashSet<string> _dismissed = new();
     private readonly Lock _lock = new();
+    private readonly Lock _rebuildLock = new();
 
     private volatile IReadOnlyList<Suggestion> _candidates = [];
 
@@ -195,6 +196,14 @@ public sealed class InsightEngine
     }
 
     public void Rebuild()
+    {
+        lock (_rebuildLock)
+        {
+            RebuildCore();
+        }
+    }
+
+    private void RebuildCore()
     {
         var now = _clock.Current;
         var devices = _registry.Snapshot().ToDictionary(d => d.DeviceId);
