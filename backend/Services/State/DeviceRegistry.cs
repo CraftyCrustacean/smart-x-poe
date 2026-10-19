@@ -45,7 +45,6 @@ public class DeviceRegistry
             if (!_devices.TryGetValue(deviceId, out var current))
                 return TelemetryUpdateResult.UnknownDevice;
 
-            // If the telemetry is older than the last seen timestamp, ignore it. Prevents stale packets.
             if (current.LastSeenUtc is { } lastSeen && receivedAtUtc <= lastSeen)
                 return TelemetryUpdateResult.Stale;
 

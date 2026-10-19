@@ -10,6 +10,7 @@ About 1,200 simulated ESP32 devices (400 monitoring points, each with an environ
 
 - [Quick start](#quick-start)
 - [First-time Docker setup (Windows)](#first-time-docker-setup-windows)
+- [Viewing Priority Queue](#viewing-priority-queue)
 - [Using the app](#using-the-app)
 - [How it works](#how-it-works)
 - [Configuration](#configuration)
@@ -70,6 +71,15 @@ Enable virtualisation and WSL 2
 3. Restart your PC, then install and start [Docker Desktop](https://docs.docker.com/desktop/setup/install/windows-install/).
 
 ---
+
+## Viewing Priority Queue
+
+To see diagnostics and the priority queue in action navigate to the following links. Waiting for a new batch to come through (10 seconds) and refreshing the page will show it working in real time.
+
+| Diagnostic            | Link                                         |
+| :-------------------- | :------------------------------------------- |
+| Priority queue        | http://localhost:8080/api/diagnostics/queues |
+| Duplicate suppression | http://localhost:8080/api/diagnostics/sets   |
 
 ## Using the app
 
