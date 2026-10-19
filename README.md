@@ -30,13 +30,25 @@ Everything runs in Docker, so the only thing you need installed is [Docker Deskt
 
 start.bat creates .env from .env.example if it is missing, builds and starts every container, and opens the app at <http://localhost:3000>. The first run builds the images and takes a few minutes. To stop everything, double-click **stop.bat**.
 
-### Mac and Linux - one click
+### Mac - one click
 
 1. Clone or download the repository.
 2. Start Docker Desktop and wait for **Engine running**.
-3. Double-click **start.sh**.
+3. Open the terminal (Cmd + Space, type terminal).
+4. Drag and drop the file into the terminal window to copy its path.
+5. Press enter to run the script.
 
-start.sh creates .env from .env.example if it is missing, builds and starts every container, and opens the app at <http://localhost:3000>. The first run builds the images and takes a few minutes. To stop everything, double-click **stop.sh**.
+start.sh creates .env from .env.example if it is missing, builds and starts every container, and opens the app at <http://localhost:3000>. The first run builds the images and takes a few minutes. To stop everything, repeat the process with **stop.sh**.
+
+### Mac - one click
+
+1. Clone or download the repository.
+2. Start Docker Desktop and wait for **Engine running**.
+3. Open the terminal (Ctrl + Alt + T).
+4. Give the file executable permission: ```chmod +x start.sh```
+5. Run the script using ```./start.sh```
+
+start.sh creates .env from .env.example if it is missing, builds and starts every container, and opens the app at <http://localhost:3000>. The first run builds the images and takes a few minutes. To stop everything, repeat the process with **stop.sh**.
 
 ### The Containers
 
