@@ -20,9 +20,9 @@ public class TelemetryProcessor
     private readonly DeviceRegistry _deviceRegistry;
     private readonly DeviceStore _deviceStore;
     private readonly TelemetryQueue _telemetryQueue;
-    private readonly ReadingHistory<EnvironmentalReading> _environmentalTimeline;
-    private readonly ReadingHistory<ActuatorReading> _actuatorTimeline;
-    private readonly ReadingHistory<FlowRateReading> _flowRateTimeline;
+    private readonly TelemetryHistory<EnvironmentalReading> _environmentalTimeline;
+    private readonly TelemetryHistory<ActuatorReading> _actuatorTimeline;
+    private readonly TelemetryHistory<FlowRateReading> _flowRateTimeline;
     private readonly ThresholdEvaluator _thresholdEvaluator;
     private readonly ActiveAlerts _activeAlerts;
     private readonly LiveUpdates _liveUpdates;
@@ -39,9 +39,9 @@ public class TelemetryProcessor
         DeviceStore deviceStore,
         FlowRateHistory flowRateHistory,
         TelemetryQueue telemetryQueue,
-        ReadingHistory<EnvironmentalReading> environmentalTimeline,
-        ReadingHistory<ActuatorReading> actuatorTimeline,
-        ReadingHistory<FlowRateReading> flowRateTimeline,
+        TelemetryHistory<EnvironmentalReading> environmentalTimeline,
+        TelemetryHistory<ActuatorReading> actuatorTimeline,
+        TelemetryHistory<FlowRateReading> flowRateTimeline,
         ThresholdEvaluator thresholdEvaluator,
         ActiveAlerts activeAlerts,
         LiveUpdates liveUpdates,
@@ -160,6 +160,9 @@ public class TelemetryProcessor
 
         var isLatest = result == TelemetryUpdateResult.Applied;
 
+        if (_deviceRegistry.TryGet(reading.DeviceId, out var registered))
+            reading.DeviceId = registered.DeviceId;
+
         if (
             reading is ActuatorReading valve
             && _deviceRegistry.TryGet(valve.DeviceId, out var current)
@@ -171,13 +174,13 @@ public class TelemetryProcessor
         switch (reading)
         {
             case EnvironmentalReading environmental:
-                _environmentalTimeline.Add(environmental);
+                _environmentalTimeline.Add(environmental, item.Sequence);
                 break;
             case ActuatorReading actuator:
-                _actuatorTimeline.Add(actuator);
+                _actuatorTimeline.Add(actuator, item.Sequence);
                 break;
             case FlowRateReading flowRate:
-                _flowRateTimeline.Add(flowRate);
+                _flowRateTimeline.Add(flowRate, item.Sequence);
                 break;
         }
 

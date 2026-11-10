@@ -38,8 +38,8 @@ public sealed class InsightEngine
     private readonly DisconnectDetector _disconnects;
     private readonly BatchClock _clock;
     private readonly ThresholdEvaluator _thresholds;
-    private readonly ReadingHistory<EnvironmentalReading> _environmental;
-    private readonly ReadingHistory<FlowRateReading> _flowRate;
+    private readonly TelemetryHistory<EnvironmentalReading> _environmental;
+    private readonly TelemetryHistory<FlowRateReading> _flowRate;
     private readonly int _lowBattery;
 
     public InsightEngine(
@@ -50,8 +50,8 @@ public sealed class InsightEngine
         DisconnectDetector disconnects,
         BatchClock clock,
         ThresholdEvaluator thresholds,
-        ReadingHistory<EnvironmentalReading> environmental,
-        ReadingHistory<FlowRateReading> flowRate,
+        TelemetryHistory<EnvironmentalReading> environmental,
+        TelemetryHistory<FlowRateReading> flowRate,
         IOptions<SearchSettings> search
     )
     {
@@ -390,8 +390,8 @@ public sealed class InsightEngine
 
             IReadOnlyList<SensorReading> timeline = d.Category switch
             {
-                DeviceCategory.Environmental => _environmental.GetTimeline(d.DeviceId),
-                DeviceCategory.FlowRate => _flowRate.GetTimeline(d.DeviceId),
+                DeviceCategory.Environmental => _environmental.Recent(d.DeviceId),
+                DeviceCategory.FlowRate => _flowRate.Recent(d.DeviceId),
                 _ => [],
             };
             if (timeline.Count < DriftRecent * 2)

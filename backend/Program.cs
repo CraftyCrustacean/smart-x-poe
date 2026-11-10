@@ -53,7 +53,7 @@ var dbSettings =
 builder.Services.AddHealthChecks();
 builder.Services.AddSingleton<TelemetryQueue>();
 builder.Services.AddHostedService<TelemetryConsumer>();
-builder.Services.AddSingleton(typeof(ReadingHistory<>));
+builder.Services.AddSingleton(typeof(TelemetryHistory<>));
 builder.Services.AddSingleton<DisconnectedDevices>();
 builder.Services.AddSingleton<ActiveAlerts>();
 builder.Services.AddSingleton<AlertLog>();

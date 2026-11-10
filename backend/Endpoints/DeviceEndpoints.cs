@@ -173,9 +173,9 @@ public static class DeviceEndpoints
             (
                 string deviceId,
                 DeviceRegistry registry,
-                ReadingHistory<EnvironmentalReading> environmental,
-                ReadingHistory<ActuatorReading> actuator,
-                ReadingHistory<FlowRateReading> flowRate
+                TelemetryHistory<EnvironmentalReading> environmental,
+                TelemetryHistory<ActuatorReading> actuator,
+                TelemetryHistory<FlowRateReading> flowRate
             ) =>
             {
                 if (!registry.TryGet(deviceId, out var state))
@@ -185,9 +185,9 @@ public static class DeviceEndpoints
 
                 return state.Category switch
                 {
-                    DeviceCategory.Environmental => Results.Ok(environmental.GetTimeline(deviceId)),
-                    DeviceCategory.Actuator => Results.Ok(actuator.GetTimeline(deviceId)),
-                    DeviceCategory.FlowRate => Results.Ok(flowRate.GetTimeline(deviceId)),
+                    DeviceCategory.Environmental => Results.Ok(environmental.Recent(deviceId)),
+                    DeviceCategory.Actuator => Results.Ok(actuator.Recent(deviceId)),
+                    DeviceCategory.FlowRate => Results.Ok(flowRate.Recent(deviceId)),
                     _ => Results.NotFound(),
                 };
             }

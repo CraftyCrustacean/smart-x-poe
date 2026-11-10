@@ -20,8 +20,8 @@ public sealed class DeviceSearchService
     private readonly MutedDevices _muted;
     private readonly BatchClock _clock;
     private readonly ThresholdEvaluator _thresholds;
-    private readonly ReadingHistory<EnvironmentalReading> _environmental;
-    private readonly ReadingHistory<FlowRateReading> _flowRate;
+    private readonly TelemetryHistory<EnvironmentalReading> _environmental;
+    private readonly TelemetryHistory<FlowRateReading> _flowRate;
     private readonly int _lowBattery;
 
     public DeviceSearchService(
@@ -31,8 +31,8 @@ public sealed class DeviceSearchService
         MutedDevices muted,
         BatchClock clock,
         ThresholdEvaluator thresholds,
-        ReadingHistory<EnvironmentalReading> environmental,
-        ReadingHistory<FlowRateReading> flowRate,
+        TelemetryHistory<EnvironmentalReading> environmental,
+        TelemetryHistory<FlowRateReading> flowRate,
         IOptions<SearchSettings> settings
     )
     {
@@ -188,8 +188,8 @@ public sealed class DeviceSearchService
     {
         SensorReading? latest = device.Category switch
         {
-            DeviceCategory.Environmental => _environmental.GetLatest(device.DeviceId),
-            DeviceCategory.FlowRate => _flowRate.GetLatest(device.DeviceId),
+            DeviceCategory.Environmental => _environmental.Latest(device.DeviceId),
+            DeviceCategory.FlowRate => _flowRate.Latest(device.DeviceId),
             _ => null,
         };
         if (latest is null)
