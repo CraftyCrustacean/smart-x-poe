@@ -78,6 +78,9 @@ builder.Services.Configure<SearchSettings>(
 builder.Services.AddSingleton<DeviceSearchService>();
 builder.Services.AddSingleton<SearchClickLog>();
 builder.Services.AddSingleton<InsightEngine>();
+builder.Services.Configure<MeshSettings>(
+    builder.Configuration.GetSection(MeshSettings.MeshSettingsName)
+);
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
