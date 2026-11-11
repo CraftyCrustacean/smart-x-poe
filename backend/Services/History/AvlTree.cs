@@ -171,6 +171,40 @@ public sealed class AvlTree<TKey, TValue>
             CollectRange(node.Left, from, to, limit, output, ref visited);
     }
 
+    public List<TValue> ScanRange(TKey from, TKey to, int limit, out int visited)
+    {
+        visited = 0;
+        if (limit <= 0)
+            return [];
+
+        var window = new Queue<TValue>();
+        var stack = new Stack<Node>();
+        var node = _root;
+
+        while (node is not null || stack.Count > 0)
+        {
+            while (node is not null)
+            {
+                stack.Push(node);
+                node = node.Left;
+            }
+
+            node = stack.Pop();
+            visited++;
+
+            if (node.Key.CompareTo(from) >= 0 && node.Key.CompareTo(to) <= 0)
+            {
+                window.Enqueue(node.Value);
+                if (window.Count > limit)
+                    window.Dequeue();
+            }
+
+            node = node.Right;
+        }
+
+        return [.. window];
+    }
+
     public List<KeyValuePair<TKey, TValue>> ToList()
     {
         var output = new List<KeyValuePair<TKey, TValue>>(Count);

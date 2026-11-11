@@ -1,35 +1,16 @@
 import { useThresholds } from "../../api/dashboard";
 import { useDeviceReadings } from "../../api/devices";
+import { formatSimDate, isPastThreshold, METRICS } from "../../lib/format";
 import {
-  formatSimDate,
-  formatValue,
-  isPastThreshold,
-  METRICS,
-} from "../../lib/format";
-
-const COLUMNS = {
-  Environmental: [
-    "elevation_change_mm",
-    "surface_temperature_c",
-    "colour_shift_index",
-    "battery_level_pct",
-  ],
-  FlowRate: ["flow_rate_lps", "battery_level_pct"],
-  Actuator: ["valve_open", "battery_level_pct"],
-};
-
-const HEADERS = { battery_level_pct: "Battery", valve_open: "Valve" };
-
-function display(metric, value) {
-  if (metric === "battery_level_pct") return `${value}%`;
-  if (metric === "valve_open") return value ? "Open" : "Closed";
-  return formatValue(metric, value);
-}
+  displayReading,
+  READING_COLUMNS,
+  readingHeader,
+} from "../../lib/readings";
 
 export default function RecentReadingsTable({ deviceId, category, rows = 10 }) {
   const { data: readings = [] } = useDeviceReadings(deviceId);
   const { data: thresholds } = useThresholds();
-  const columns = COLUMNS[category] ?? [];
+  const columns = READING_COLUMNS[category] ?? [];
   const newestFirst = [...readings].reverse().slice(0, rows);
 
   if (newestFirst.length === 0)
@@ -48,7 +29,7 @@ export default function RecentReadingsTable({ deviceId, category, rows = 10 }) {
             </th>
             {columns.map((c) => (
               <th key={c} scope="col" className="px-3 py-2">
-                {METRICS[c]?.label ?? HEADERS[c]}
+                {readingHeader(c)}
               </th>
             ))}
           </tr>
@@ -70,7 +51,7 @@ export default function RecentReadingsTable({ deviceId, category, rows = 10 }) {
                     key={c}
                     className={`px-3 py-2 tabular-nums ${past ? "text-red-700 font-medium" : "text-slate-900"}`}
                   >
-                    {display(c, r[c])}
+                    {displayReading(c, r[c])}
                     {past && (
                       <span className="sr-only">
                         {" "}

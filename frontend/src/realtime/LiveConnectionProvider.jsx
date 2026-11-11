@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { HubConnectionBuilder, LogLevel } from "@microsoft/signalr";
 import { useQueryClient } from "@tanstack/react-query";
 import { API_BASE } from "../lib/format";
+import { rangeTouchesNewest } from "../lib/history";
 import { LiveContext } from "./liveContext";
 
 const RECENT_ALERT_LIMIT = 50;
@@ -29,6 +30,11 @@ export function LiveConnectionProvider({ children }) {
       queryClient.invalidateQueries({ queryKey: ["commands"] });
       queryClient.invalidateQueries({ queryKey: ["search"] });
       queryClient.invalidateQueries({ queryKey: ["insights"] });
+      queryClient.invalidateQueries({ queryKey: ["history", "bounds"] });
+      queryClient.invalidateQueries({
+        queryKey: ["history", "range"],
+        predicate: (query) => rangeTouchesNewest(query.queryKey, queryClient),
+      });
     });
 
     connection.on("AlertRaised", (alert) => {

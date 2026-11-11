@@ -92,4 +92,25 @@ public class TelemetryHistoryTests
         Assert.Empty(history.Recent("missing"));
         Assert.Equal(0, history.Stats("missing").Stored);
     }
+
+    [Fact]
+    public void ScanTimeOnlyIfAsked()
+    {
+        var history = NewHistory(capacity: 1000);
+        for (var day = 0; day < 100; day++)
+            history.Add(Reading("A", day), day);
+
+        var plain = history.Range("A", Day0.AddDays(10), Day0.AddDays(19), limit: 500);
+        var compared = history.Range(
+            "A",
+            Day0.AddDays(10),
+            Day0.AddDays(19),
+            limit: 500,
+            compareLinearScan: true
+        );
+
+        Assert.Null(plain.LinearScanMicroseconds);
+        Assert.NotNull(compared.LinearScanMicroseconds);
+        Assert.Equal(plain.Rows, compared.Rows);
+    }
 }

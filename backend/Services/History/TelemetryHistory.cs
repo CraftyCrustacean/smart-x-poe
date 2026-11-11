@@ -59,26 +59,37 @@ public sealed class TelemetryHistory<TReading>
             return history.Tree.Last(count);
     }
 
-    public HistoryQueryResult<TReading> Range(string deviceId, DateTime from, DateTime to, int limit)
+    public HistoryQueryResult<TReading> Range(
+        string deviceId,
+        DateTime from,
+        DateTime to,
+        int limit,
+        bool compareLinearScan = false
+    )
     {
         limit = Math.Clamp(limit, 1, _capacity);
 
         if (!_byDevice.TryGetValue(deviceId, out var history))
-            return new HistoryQueryResult<TReading>(deviceId, 0, 0, 0, 0, 0, 0, false, 0, []);
+            return new HistoryQueryResult<TReading>(deviceId, 0, 0, 0, 0, 0, 0, false, 0, null, []);
 
         lock (history.Gate)
         {
             var tree = history.Tree;
+            var lower = HistoryKey.StartOf(from);
+            var upper = HistoryKey.EndOf(to);
             var started = Stopwatch.GetTimestamp();
 
-            var rows = tree.Range(
-                HistoryKey.StartOf(from),
-                HistoryKey.EndOf(to),
-                limit + 1,
-                out var visited
-            );
+            var rows = tree.Range(lower, upper, limit + 1, out var visited);
 
             var elapsed = Stopwatch.GetElapsedTime(started).TotalMicroseconds;
+
+            double? linearScan = null;
+            if (compareLinearScan)
+            {
+                var scanStarted = Stopwatch.GetTimestamp();
+                tree.ScanRange(lower, upper, limit + 1, out _);
+                linearScan = Stopwatch.GetElapsedTime(scanStarted).TotalMicroseconds;
+            }
 
             var truncated = rows.Count > limit;
             if (truncated)
@@ -94,6 +105,7 @@ public sealed class TelemetryHistory<TReading>
                 rows.Count,
                 truncated,
                 elapsed,
+                linearScan,
                 rows
             );
         }

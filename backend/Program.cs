@@ -116,6 +116,7 @@ app.MapDashboardEndpoints();
 app.MapCommandEndpoints();
 app.MapSearchEndpoints();
 app.MapInsightEndpoints();
+app.MapHistoryEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",

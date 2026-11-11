@@ -170,5 +170,7 @@ public class AvlTreeTests
             .TakeLast(limit);
 
         Assert.Equal(expected, tree.Range(from, to, limit, out _));
+        Assert.Equal(expected, tree.ScanRange(from, to, limit, out var scanned));
+        Assert.Equal(tree.Count, scanned);
     }
 }

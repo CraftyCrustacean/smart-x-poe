@@ -123,24 +123,6 @@ function NavItem({ to, icon: Icon, label }) {
   );
 }
 
-function DisabledNavItem({ icon: Icon, label, note }) {
-  const collapsed = useContext(SidebarCollapsedContext);
-
-  return (
-    <div
-      aria-disabled="true"
-      title={collapsed ? `${label} (${note})` : undefined}
-      className="flex items-center gap-2 px-3 py-2 text-sm font-medium rounded border border-transparent text-slate-500 cursor-not-allowed"
-    >
-      <Icon size={18} strokeWidth={1} aria-hidden="true" className="shrink-0" />
-      <span className={collapsed ? "sr-only" : "flex flex-col"}>
-        <span>{label}</span>
-        <span className="text-xs">{note}</span>
-      </span>
-    </div>
-  );
-}
-
 const COLLAPSED_STORAGE_KEY = "sidebar-collapsed";
 
 function Sidebar() {
@@ -217,13 +199,9 @@ function Sidebar() {
             <ModuleSection
               id="topology"
               title="Network Topology and Mesh Routing"
-              disabled
+              paths={["/network"]}
             >
-              <DisabledNavItem
-                icon={Network}
-                label="Topology"
-                note="Available in the final PoE"
-              />
+              <NavItem to="/network" icon={Network} label="Mesh Overview" />
             </ModuleSection>
           </nav>
           <div className="shrink-0 p-3 border-t border-slate-300">

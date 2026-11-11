@@ -8,6 +8,9 @@ public class ActuatorReading : SensorReading
     [JsonPropertyName("valve_open")]
     public required bool ValveOpen { get; set; }
 
+    [JsonPropertyName("overridden")]
+    public bool Overridden { get; set; }
+
     public override List<TelemetryPacket> ToPackets()
     {
         List<TelemetryPacket> allActuatorPackets = new();

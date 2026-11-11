@@ -169,7 +169,10 @@ public class TelemetryProcessor
             && current.Override is { Kind: OverrideKind.ValveOpen or OverrideKind.ValveClosed } o
             && o.ValidUntilBatch > _clock.Current
         )
+        {
             valve.ValveOpen = o.Kind == OverrideKind.ValveOpen;
+            valve.Overridden = true;
+        }
 
         switch (reading)
         {

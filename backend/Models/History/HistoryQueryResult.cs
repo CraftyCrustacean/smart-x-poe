@@ -20,5 +20,6 @@ public sealed record HistoryQueryResult<TReading>(
     int Returned,
     bool Truncated,
     double ElapsedMicroseconds,
+    double? LinearScanMicroseconds,
     IReadOnlyList<TReading> Rows
 );

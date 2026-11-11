@@ -9,6 +9,8 @@ import CommandStream from "./pages/CommandStream";
 import CommandHistory from "./pages/CommandHistory";
 import Insights from "./pages/Insights";
 import NotFound from "./pages/NotFound";
+import NetworkOverview from "./pages/NetworkOverview";
+import NetworkDevice from "./pages/NetworkDevice";
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
             <Route path="/command-stream" element={<CommandStream />} />
             <Route path="/insights" element={<Insights />} />
             <Route path="/command-history"element={<CommandHistory />} />
+            <Route path="/network" element={<NetworkOverview />} />
+            <Route path="/network/devices/:deviceId" element={<NetworkDevice />} />
             <Route path="*"element={<NotFound />} />
           </Routes>
         </Layout>

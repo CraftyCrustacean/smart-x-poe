@@ -4,45 +4,10 @@ import { ArrowRight, Funnel, Search } from "lucide-react";
 import { logSearchClick, useSearchSuggestions } from "../../api/search";
 import { zoneLabel } from "../../lib/format";
 import { activeFilters, FILTER_KEYS } from "../../lib/search";
+import Highlight from "./Highlight";
 import SearchFilters from "./SearchFilters";
+import useDismiss from "./useDismiss";
 import useSearchParamsState from "./useSearchParamsState";
-
-const normalise = (s) => s.replace(/[\s:-]/g, "").toUpperCase();
-
-function Highlight({ id, q }) {
-  const needle = normalise(q);
-  const positions = [];
-  let norm = "";
-  for (let i = 0; i < id.length; i++) {
-    if (/[\s:-]/.test(id[i])) continue;
-    positions.push(i);
-    norm += id[i].toUpperCase();
-  }
-  const at = needle ? norm.indexOf(needle) : -1;
-  if (at < 0) return id;
-  const start = positions[at];
-  const end = positions[at + needle.length - 1] + 1;
-  return (
-    <>
-      {id.slice(0, start)}
-      <mark className="bg-orange-100 text-slate-900 rounded-sm">
-        {id.slice(start, end)}
-      </mark>
-      {id.slice(end)}
-    </>
-  );
-}
-
-function useDismiss(ref, open, onClose) {
-  useEffect(() => {
-    if (!open) return;
-    const onPointerDown = (e) => {
-      if (!ref.current?.contains(e.target)) onClose();
-    };
-    document.addEventListener("pointerdown", onPointerDown);
-    return () => document.removeEventListener("pointerdown", onPointerDown);
-  }, [ref, open, onClose]);
-}
 
 export default function HeaderSearch() {
   const navigate = useNavigate();
