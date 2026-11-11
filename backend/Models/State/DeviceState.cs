@@ -10,6 +10,8 @@ public sealed record DeviceState
     public required string Zone { get; init; }
     public required string Subzone { get; init; }
     public required float ChainageKm { get; init; }
+    public required double Latitude { get; init; }
+    public required double Longitude { get; init; }
     public DateTime? LastSeenUtc { get; init; }
     public int? BatteryPct { get; init; }
     public DeviceOverride? Override { get; init; }
@@ -22,5 +24,7 @@ public sealed record DeviceState
             Zone = data.TopologyData.Zone,
             Subzone = data.TopologyData.Subzone,
             ChainageKm = data.LocationData.Chainage,
+            Latitude = data.LocationData.Latitude,
+            Longitude = data.LocationData.Longitude,
         };
 }

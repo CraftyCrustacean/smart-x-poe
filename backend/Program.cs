@@ -5,6 +5,7 @@ using backend.Services;
 using backend.Services.Commands;
 using backend.Services.History;
 using backend.Services.Insights;
+using backend.Services.Mesh;
 using backend.Services.Persistence;
 using backend.Services.Search;
 using backend.Services.Snapshots;
@@ -81,6 +82,7 @@ builder.Services.AddSingleton<InsightEngine>();
 builder.Services.Configure<MeshSettings>(
     builder.Configuration.GetSection(MeshSettings.MeshSettingsName)
 );
+builder.Services.AddSingleton<MeshService>();
 
 string connectionString = (
     $"Host={dbSettings.DbHost};"
@@ -91,6 +93,8 @@ string connectionString = (
 );
 
 builder.Services.AddNpgsqlDataSource(connectionString);
+
+builder.Services.AddResponseCompression();
 
 var app = builder.Build();
 
@@ -105,6 +109,9 @@ foreach (var device in await deviceStore.GetAllDevices())
 }
 app.Logger.LogInformation("Device registry loaded {Count} devices from Postgres.", loaded);
 
+app.Services.GetRequiredService<MeshService>().GetTopology();
+
+app.UseResponseCompression();
 app.UseCors(myAllowSpecificOrigins);
 app.MapDeviceEndpoints();
 app.MapFileEndpoints();
@@ -117,6 +124,7 @@ app.MapCommandEndpoints();
 app.MapSearchEndpoints();
 app.MapInsightEndpoints();
 app.MapHistoryEndpoints();
+app.MapMeshEndpoints();
 app.MapHub<TelemetryHub>("/hubs/telemetry");
 app.MapGet(
     "/health",
