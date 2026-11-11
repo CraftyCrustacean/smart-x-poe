@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using static backend.Models.Provision.ProvisionData;
 
 namespace backend.Models.Mesh;
@@ -26,4 +27,21 @@ public sealed record MeshTopologyDto(
     int LinkCount,
     IReadOnlyList<MeshVertex> Vertices,
     IReadOnlyList<MeshLink> Links
+);
+
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum NodeStatus
+{
+    Online,
+    Offline,
+    Failed,
+    CutOff,
+}
+
+public sealed record HealingEntry(
+    int Down,
+    int Dependant,
+    int? NewNextHop,
+    int? NewHops,
+    float? NewCost
 );

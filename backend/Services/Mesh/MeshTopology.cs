@@ -70,10 +70,6 @@ public sealed class MeshTopology
             );
         }
 
-        var neighbours = new List<MeshEdge>[vertices.Length];
-        for (var v = 0; v < vertices.Length; v++)
-            neighbours[v] = [];
-
         var links = new List<MeshLink>();
 
         for (var a = 0; a < vertices.Length; a++)
@@ -92,9 +88,37 @@ public sealed class MeshTopology
                 var cost = (float)(km * km + settings.HopOverhead);
 
                 links.Add(new MeshLink(a, b, (float)km, cost));
-                neighbours[a].Add(new MeshEdge(b, cost));
-                neighbours[b].Add(new MeshEdge(a, cost));
             }
+        }
+
+        return Assemble(vertices, links, started);
+    }
+
+    public static MeshTopology FromLinks(int vertexCount, IEnumerable<(int A, int B, float Cost)> links)
+    {
+        var started = Stopwatch.GetTimestamp();
+
+        var vertices = new MeshVertex[vertexCount];
+        for (var v = 0; v < vertexCount; v++)
+            vertices[v] = new MeshVertex($"V{v}", 0, 0, null, null, null, null, v == Gateway);
+
+        var list = links
+            .Select(l => new MeshLink(Math.Min(l.A, l.B), Math.Max(l.A, l.B), 0, l.Cost))
+            .ToList();
+
+        return Assemble(vertices, list, started);
+    }
+
+    private static MeshTopology Assemble(MeshVertex[] vertices, List<MeshLink> links, long started)
+    {
+        var neighbours = new List<MeshEdge>[vertices.Length];
+        for (var v = 0; v < vertices.Length; v++)
+            neighbours[v] = [];
+
+        foreach (var link in links)
+        {
+            neighbours[link.A].Add(new MeshEdge(link.B, link.Cost));
+            neighbours[link.B].Add(new MeshEdge(link.A, link.Cost));
         }
 
         var indexOf = new Dictionary<string, int>(vertices.Length);
