@@ -208,6 +208,40 @@ public static class MeshAlgorithms
         return report;
     }
 
+    public static int[] Depths(int[] parent, int root = MeshTopology.Gateway)
+    {
+        const int Unknown = -2;
+        var depth = NewFilled(parent.Length, Unknown);
+        depth[root] = 0;
+        var pending = new Stack<int>();
+
+        for (var v = 0; v < parent.Length; v++)
+        {
+            var u = v;
+            while (depth[u] == Unknown)
+            {
+                if (parent[u] < 0)
+                {
+                    depth[u] = -1;
+                    break;
+                }
+                pending.Push(u);
+                if (pending.Count > parent.Length)
+                    throw new InvalidOperationException("The parent array contains a cycle.");
+                u = parent[u];
+            }
+
+            var d = depth[u];
+            while (pending.Count > 0)
+            {
+                d = d < 0 ? -1 : d + 1;
+                depth[pending.Pop()] = d;
+            }
+        }
+
+        return depth;
+    }
+
     private static bool IsDown(NodeStatus status) =>
         status is NodeStatus.Offline or NodeStatus.Failed;
 

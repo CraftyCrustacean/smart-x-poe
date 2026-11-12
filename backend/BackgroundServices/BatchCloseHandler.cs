@@ -1,6 +1,7 @@
 using backend.Models.Telemetry;
 using backend.Services;
 using backend.Services.Insights;
+using backend.Services.Mesh;
 using backend.Services.Snapshots;
 using backend.Services.State;
 using backend.Services.Telemetry;
@@ -17,6 +18,7 @@ public sealed class BatchCloseHandler : IHostedService
     private readonly LiveUpdates _liveUpdates;
     private readonly BatchClock _batchClock;
     private readonly InsightEngine _insights;
+    private readonly MeshService _mesh;
 
     public BatchCloseHandler(
         TelemetryBatcher batcher,
@@ -26,7 +28,8 @@ public sealed class BatchCloseHandler : IHostedService
         DashboardSummaryService summaryService,
         LiveUpdates liveUpdates,
         BatchClock batchClock,
-        InsightEngine insights
+        InsightEngine insights,
+        MeshService mesh
     )
     {
         _batcher = batcher;
@@ -37,6 +40,7 @@ public sealed class BatchCloseHandler : IHostedService
         _liveUpdates = liveUpdates;
         _batchClock = batchClock;
         _insights = insights;
+        _mesh = mesh;
     }
 
     public Task StartAsync(CancellationToken cancellationToken)
@@ -66,6 +70,15 @@ public sealed class BatchCloseHandler : IHostedService
         catch (Exception ex)
         {
             _logger.LogError(ex, "Failed to build insight, keeping previous.");
+        }
+
+        try
+        {
+            _liveUpdates.MeshChanged(_mesh.Rebuild().ToSummary());
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Failed to rebuild mesh, keeping previous.");
         }
 
         _liveUpdates.BatchClosed(_summaryService.Build());

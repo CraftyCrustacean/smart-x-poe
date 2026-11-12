@@ -152,6 +152,9 @@ public class MeshTopologyTests
         var registry = new DeviceRegistry();
         var service = new MeshService(
             registry,
+            new DisconnectedDevices(),
+            new SimulatedFailures(),
+            new BatchClock(),
             Options.Create(Settings),
             NullLogger<MeshService>.Instance
         );

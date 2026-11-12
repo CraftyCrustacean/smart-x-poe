@@ -1,6 +1,7 @@
 using backend.Hubs;
 using backend.Models.Commands;
 using backend.Models.Live;
+using backend.Models.Mesh;
 using Microsoft.AspNetCore.SignalR;
 
 namespace backend.Services;
@@ -24,6 +25,9 @@ public sealed class LiveUpdates
 
     public void CommandsChanged(CommandRecord record) =>
         _ = SendAsync(clients => clients.CommandsChanged(record), nameof(CommandsChanged));
+
+    public void MeshChanged(MeshSummary summary) =>
+        _ = SendAsync(clients => clients.MeshChanged(summary), nameof(MeshChanged));
 
     private async Task SendAsync(Func<ITelemetryClient, Task> send, string eventName)
     {

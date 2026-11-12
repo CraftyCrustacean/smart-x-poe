@@ -56,6 +56,7 @@ builder.Services.AddSingleton<TelemetryQueue>();
 builder.Services.AddHostedService<TelemetryConsumer>();
 builder.Services.AddSingleton(typeof(TelemetryHistory<>));
 builder.Services.AddSingleton<DisconnectedDevices>();
+builder.Services.AddSingleton<SimulatedFailures>();
 builder.Services.AddSingleton<ActiveAlerts>();
 builder.Services.AddSingleton<AlertLog>();
 builder.Services.AddSingleton<DisconnectDetector>();
