@@ -66,7 +66,7 @@ export default function NetworkOverview() {
           <section className="bg-white border border-slate-300 rounded-lg px-4 py-2.5">
             <DevicePicker />
             <p className="mt-1.5 text-xs text-slate-500">
-              Search a device to query its history.
+              Search a device to query its history and view its routing.
             </p>
           </section>
 
