@@ -42,6 +42,13 @@ export function LiveConnectionProvider({ children }) {
       setUnreadAlerts((n) => Math.min(n + 1, RECENT_ALERT_LIMIT));
     });
 
+    connection.on("MeshChanged", () => {
+      queryClient.invalidateQueries({ queryKey: ["mesh", "state"] });
+      queryClient.invalidateQueries({ queryKey: ["mesh", "route"] });
+      queryClient.invalidateQueries({ queryKey: ["mesh", "reachability"] });
+      queryClient.invalidateQueries({ queryKey: ["mesh", "healing"] });
+    });
+
     connection.on("CommandsChanged", () => {
       queryClient.invalidateQueries({ queryKey: ["commands"] });
       queryClient.invalidateQueries({ queryKey: ["device"] });

@@ -54,7 +54,7 @@ function BreachList({ id, breaches }) {
           </span>
           <span className="text-xs text-slate-500">
             severity {b.severity.toFixed(2)}
-            {b.readings > 1 && ` · worst of ${b.readings} readings`}
+            {b.readings > 1 && ` - worst of ${b.readings} readings`}
           </span>
         </li>
       ))}

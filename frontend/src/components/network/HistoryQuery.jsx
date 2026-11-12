@@ -13,7 +13,11 @@ import {
   formatTime,
   HISTORY_LIMITS,
 } from "../../lib/history";
-import { displayReading, READING_COLUMNS, readingHeader } from "../../lib/readings";
+import {
+  displayReading,
+  READING_COLUMNS,
+  readingHeader,
+} from "../../lib/readings";
 import { ErrorNotice, Loading, Skeleton } from "../dashboard/LoadState";
 
 function Badge({ tone, children }) {
@@ -22,7 +26,9 @@ function Badge({ tone, children }) {
     orange: "bg-orange-50 text-orange-800 border-orange-200",
   };
   return (
-    <span className={`inline-block rounded border px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}>
+    <span
+      className={`inline-block rounded border px-1.5 py-0.5 text-xs font-medium ${tones[tone]}`}
+    >
       {children}
     </span>
   );
@@ -31,10 +37,16 @@ function Badge({ tone, children }) {
 function StatCard({ label, value, detail }) {
   return (
     <div className="rounded-md border border-slate-200 bg-slate-50 px-3 py-1.5">
-      <dt className="text-[11px] uppercase tracking-wide text-slate-500">{label}</dt>
+      <dt className="text-[11px] uppercase tracking-wide text-slate-500">
+        {label}
+      </dt>
       <dd className="text-sm font-semibold text-slate-900 tabular-nums whitespace-nowrap">
         {value}
-        {detail && <span className="ml-1 text-xs font-normal text-slate-500">{detail}</span>}
+        {detail && (
+          <span className="ml-1 text-xs font-normal text-slate-500">
+            {detail}
+          </span>
+        )}
       </dd>
     </div>
   );
@@ -53,7 +65,9 @@ export default function HistoryQuery({ deviceId, category }) {
   const to = pinnedTo ?? newestDay;
   const from = pinnedFrom ?? (to ? addDays(to, -(DEFAULT_DAYS - 1)) : null);
   const limitParam = Number(params.get("limit"));
-  const limit = HISTORY_LIMITS.includes(limitParam) ? limitParam : DEFAULT_LIMIT;
+  const limit = HISTORY_LIMITS.includes(limitParam)
+    ? limitParam
+    : DEFAULT_LIMIT;
   const compare = params.get("compare") === "1";
 
   const history = useDeviceHistory(deviceId, {
@@ -140,7 +154,10 @@ export default function HistoryQuery({ deviceId, category }) {
           <select
             value={limit}
             onChange={(e) =>
-              setParam("limit", Number(e.target.value) === DEFAULT_LIMIT ? "" : e.target.value)
+              setParam(
+                "limit",
+                Number(e.target.value) === DEFAULT_LIMIT ? "" : e.target.value,
+              )
             }
             className="mt-1 rounded-md border border-slate-300 bg-white px-2 py-1 text-sm text-slate-900"
           >
@@ -195,7 +212,10 @@ export default function HistoryQuery({ deviceId, category }) {
       )}
 
       {!badRange && !history.error && result && (
-        <div aria-busy={history.isFetching} className={history.isPlaceholderData ? "opacity-60" : ""}>
+        <div
+          aria-busy={history.isFetching}
+          className={history.isPlaceholderData ? "opacity-60" : ""}
+        >
           <dl className="grid grid-cols-[repeat(auto-fit,minmax(8.5rem,1fr))] gap-2 mb-3">
             <StatCard label="Stored" value={formatCount(result.stored)} />
             <StatCard
@@ -203,14 +223,20 @@ export default function HistoryQuery({ deviceId, category }) {
               value={result.treeHeight}
               detail={`AVL max ${result.maxAvlHeight}`}
             />
-            <StatCard label="Rebalances"value={formatCount(result.rotations)} />
+            <StatCard
+              label="Rebalances"
+              value={formatCount(result.rotations)}
+            />
             <StatCard
               label="Visited"
               value={formatCount(result.visitedNodes)}
               detail={`of ${formatCount(result.stored)}`}
             />
             <StatCard label="Returned" value={formatCount(result.returned)} />
-            <StatCard label="AVL query" value={formatMicros(result.elapsedMicroseconds)} />
+            <StatCard
+              label="AVL query"
+              value={formatMicros(result.elapsedMicroseconds)}
+            />
             {result.linearScanMicroseconds != null && (
               <StatCard
                 label="Linear scan"
@@ -226,8 +252,8 @@ export default function HistoryQuery({ deviceId, category }) {
             <div className="max-h-[28rem] overflow-auto border border-slate-200 rounded-md">
               <table className="w-full text-sm text-left">
                 <caption className="sr-only">
-                  {result.returned} readings from {formatDay(from)} to {formatDay(to)}, newest
-                  first
+                  {result.returned} readings from {formatDay(from)} to{" "}
+                  {formatDay(to)}, newest first
                 </caption>
                 <thead className="sticky top-0 bg-white text-xs uppercase tracking-wide text-slate-500 border-b border-slate-200">
                   <tr>
@@ -252,7 +278,10 @@ export default function HistoryQuery({ deviceId, category }) {
                     const pastByColumn = columns.map(
                       (c) =>
                         Boolean(METRICS[c]) &&
-                        isPastThreshold(r[c], thresholds?.[METRICS[c].thresholdKey]),
+                        isPastThreshold(
+                          r[c],
+                          thresholds?.[METRICS[c].thresholdKey],
+                        ),
                     );
                     const critical = pastByColumn.some(Boolean);
                     return (
@@ -276,7 +305,9 @@ export default function HistoryQuery({ deviceId, category }) {
                         ))}
                         <td className="px-3 py-2 space-x-1 whitespace-nowrap">
                           {critical && <Badge tone="red">Critical</Badge>}
-                          {r.overridden && <Badge tone="orange">Override</Badge>}
+                          {r.overridden && (
+                            <Badge tone="orange">Override</Badge>
+                          )}
                         </td>
                       </tr>
                     );
@@ -288,8 +319,9 @@ export default function HistoryQuery({ deviceId, category }) {
 
           {result.truncated && (
             <p className="mt-2 text-xs text-slate-600">
-              More readings match this range. Showing the newest {result.returned}; narrow the
-              dates or raise the limit to see older ones.
+              More readings match this range. Showing the newest{" "}
+              {result.returned}; narrow the dates or raise the limit to see
+              older ones.
             </p>
           )}
 

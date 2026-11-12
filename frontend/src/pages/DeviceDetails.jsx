@@ -62,7 +62,10 @@ function DeviceDetails() {
   if (!device) {
     return (
       <div>
-        <p className="text-slate-600 mb-4">Device not found, check the ID and try again or use the button below to return to device selection.</p>
+        <p className="text-slate-600 mb-4">
+          Device not found, check the ID and try again or use the button below
+          to return to device selection.
+        </p>
         <Link
           to="/devices"
           className="px-3 py-1.5 rounded-md bg-orange-300 text-sm text-slate-900 hover:bg-orange-400 transition-colors"
@@ -104,6 +107,12 @@ function DeviceDetails() {
             >
               {uploadMutation.isPending ? "Uploading…" : "Attach Files"}
             </button>
+            <Link
+              to={`/network/devices/${encodeURIComponent(device.device_id)}`}
+              className="px-3 py-1.5 rounded-md border border-orange-200 bg-white text-sm text-slate-600 hover:bg-orange-100 transition-colors"
+            >
+              View mesh route
+            </Link>
             <button
               type="button"
               onClick={() =>
@@ -193,7 +202,9 @@ function DeviceDetails() {
               </div>
               <div className="flex">
                 <span className="w-40 text-slate-500">Zone</span>
-                <span className="text-slate-900">{zoneLabel(device.topology.zone)}</span>
+                <span className="text-slate-900">
+                  {zoneLabel(device.topology.zone)}
+                </span>
               </div>
               <div className="flex">
                 <span className="w-40 text-slate-500">Subzone</span>

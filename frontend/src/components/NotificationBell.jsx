@@ -96,7 +96,7 @@ function NotificationBell() {
                       </span>
                     </span>
                     <span className="block text-xs text-slate-500">
-                      {zoneLabel(a.zone)} · {a.subzone} ·{" "}
+                      {zoneLabel(a.zone)} - {a.subzone} -{" "}
                       {formatAgo(a.raisedAtUtc)}
                     </span>
                   </Link>

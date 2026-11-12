@@ -33,7 +33,6 @@ function Field({ label, children }) {
   );
 }
 
-
 export default function DeviceLivePanel({ deviceId, category }) {
   const { data, isLoading, error, refetch } = useDeviceLive(deviceId);
   const { data: readings = [] } = useDeviceReadings(deviceId);
@@ -122,7 +121,9 @@ export default function DeviceLivePanel({ deviceId, category }) {
                   <li
                     key={m}
                     className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-sm ${
-                      acked ? "bg-slate-100 text-slate-600" : "bg-red-50 text-red-700"
+                      acked
+                        ? "bg-slate-100 text-slate-600"
+                        : "bg-red-50 text-red-700"
                     }`}
                   >
                     {!acked && <TriangleAlert size={12} aria-hidden="true" />}
@@ -138,7 +139,7 @@ export default function DeviceLivePanel({ deviceId, category }) {
         <div className="mt-4 h-7">
           {valveOverride && (
             <p className="inline-block rounded-full bg-orange-100 px-3 py-1 text-sm text-orange-800">
-              {OVERRIDE_TEXT[valveOverride.kind]} · {batchesText(batchesLeft)}
+              {OVERRIDE_TEXT[valveOverride.kind]} - {batchesText(batchesLeft)}
             </p>
           )}
         </div>

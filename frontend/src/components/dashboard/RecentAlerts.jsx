@@ -68,7 +68,7 @@ export default function RecentAlerts({ sort, onSortChange, zoneHref }) {
                 </Link>
               </div>
               <p className="pl-6 text-slate-600">
-                {metricLabel(a.metric)} {formatValue(a.metric, a.value)} ·
+                {metricLabel(a.metric)} {formatValue(a.metric, a.value)} -
                 severity {a.severity.toFixed(2)}
               </p>
               <p className="pl-6 text-xs text-slate-500">
@@ -79,7 +79,7 @@ export default function RecentAlerts({ sort, onSortChange, zoneHref }) {
                 >
                   {zoneLabel(a.zone)}
                 </Link>{" "}
-                · {a.subzone}
+                - {a.subzone}
               </p>
             </li>
           ))}

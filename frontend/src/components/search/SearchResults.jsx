@@ -98,7 +98,7 @@ export default function SearchResults({ params, update }) {
         {data
           ? data.total === 0
             ? "No devices match."
-            : `Showing ${from}–${to} of ${data.total}${isFetching ? " · updating…" : ""}`
+            : `Showing ${from}–${to} of ${data.total}${isFetching ? " - updating…" : ""}`
           : "Searching…"}
       </p>
 
@@ -152,7 +152,7 @@ export default function SearchResults({ params, update }) {
                   </th>
                   <td className="px-4 py-3 text-slate-500">{r.category}</td>
                   <td className="px-4 py-3 text-slate-500 truncate">
-                    {zoneLabel(r.zone)} · {r.subzone} · {r.chainageKm.toFixed(1)} km
+                    {zoneLabel(r.zone)} - {r.subzone} - {r.chainageKm.toFixed(1)} km
                   </td>
                   <td className="px-4 py-3 text-slate-500 tabular-nums">
                     {r.batteryPct != null ? `${r.batteryPct}%` : "—"}

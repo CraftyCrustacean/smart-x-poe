@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { ArrowRight, Funnel, Search } from "lucide-react";
 import { logSearchClick, useSearchSuggestions } from "../../api/search";
 import { zoneLabel } from "../../lib/format";
@@ -11,6 +11,7 @@ import useSearchParamsState from "./useSearchParamsState";
 
 export default function HeaderSearch() {
   const navigate = useNavigate();
+  const { pathname } = useLocation();
   const { params, update, onSearchPage } = useSearchParamsState();
 
   const urlQ = params.get("q") ?? "";
@@ -75,7 +76,11 @@ export default function HeaderSearch() {
     logSearchClick(deviceId, { q: [text.trim()] });
     setText("");
     setSuggestQ("");
-    navigate(`/devices/${deviceId}`);
+    navigate(
+      pathname.startsWith("/network")
+        ? `/network/devices/${encodeURIComponent(deviceId)}`
+        : `/devices/${deviceId}`,
+    );
   };
 
   const onKeyDown = (e) => {
@@ -185,8 +190,8 @@ export default function HeaderSearch() {
                     <Highlight id={s.deviceId} q={suggestQ} />
                   </span>
                   <span className="block truncate text-xs text-slate-500">
-                    {s.category} · {zoneLabel(s.zone)} · {s.subzone}
-                    {s.inAlert ? " · In alert" : s.offline ? " · Offline" : ""}
+                    {s.category} - {zoneLabel(s.zone)} - {s.subzone}
+                    {s.inAlert ? " - In alert" : s.offline ? " - Offline" : ""}
                   </span>
                 </span>
               </li>

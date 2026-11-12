@@ -7,22 +7,42 @@ import {
 import { formatSimDate } from "../../lib/format";
 import { Loading, Skeleton } from "./LoadState";
 
-function Tile({ icon: Icon, label, value, detail, critical = false }) {
+export function Tile({
+  icon: Icon,
+  label,
+  value,
+  detail,
+  critical = false,
+  compact = false,
+}) {
   return (
-    <div className="bg-white border border-slate-300 rounded-lg p-4">
-      <div className="flex items-center gap-2 text-sm text-slate-500">
+    <div
+      className={`bg-white border border-slate-300 rounded-lg ${compact ? "px-3 py-2" : "p-4"}`}
+    >
+      <div
+        className={`flex items-center gap-2 text-slate-500 ${compact ? "text-xs" : "text-sm"}`}
+      >
         <Icon
-          size={16}
+          size={compact ? 14 : 16}
           strokeWidth={1.5}
           aria-hidden="true"
-          className={critical ? "text-red-600" : ""}
+          className={`shrink-0 ${critical ? "text-red-600" : ""}`}
         />
-        {label}
+        <span className={compact ? "truncate" : ""}>{label}</span>
       </div>
-      <p className="mt-1 text-3xl font-semibold text-slate-900 tabular-nums">
+      <p
+        className={`font-semibold text-slate-900 tabular-nums ${compact ? "text-xl" : "mt-1 text-3xl"}`}
+      >
         {value}
       </p>
-      {detail && <p className="mt-1 text-xs text-slate-500">{detail}</p>}
+      {detail && (
+        <p
+          title={compact ? detail : undefined}
+          className={`text-xs text-slate-500 ${compact ? "truncate" : "mt-1"}`}
+        >
+          {detail}
+        </p>
+      )}
     </div>
   );
 }

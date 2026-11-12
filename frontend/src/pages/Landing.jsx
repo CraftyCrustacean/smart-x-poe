@@ -35,9 +35,10 @@ const modules = [
   },
   {
     title: "Network Topology and Mesh Routing",
-    description: "Visualise the pipeline mesh and routing paths.",
-    to: null,
-    cta: "Available in the final PoE",
+    description:
+      "See how devices relay data to the gateway, simulate failures, and track each device's route and history.",
+    to: "/network",
+    cta: "Open Mesh Overview",
   },
 ];
 

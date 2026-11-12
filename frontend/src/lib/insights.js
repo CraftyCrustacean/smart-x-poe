@@ -21,7 +21,7 @@ export const insightDetail = (s) => {
 export const insightTitle = (s) =>
   s.action === "Inspect"
     ? `Inspect ${s.deviceId}`
-    : `${commandLabel(s.action, s.target)} · ${describeTarget(s.target)}`;
+    : `${commandLabel(s.action, s.target)} - ${describeTarget(s.target)}`;
 
 export const actionLabel = (action) =>
   action === "Inspect" ? "Open the device" : (COMMANDS[action]?.label ?? action);
